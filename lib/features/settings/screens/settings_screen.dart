@@ -219,9 +219,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Container(
               decoration: BoxDecoration(
                 color: isDark ? AppColors.surfaceDark : Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                borderRadius: BorderRadius.circular(26),
+                border: isDark ? null : Border.all(
+                  color: AppColors.borderLight,
                   width: 1.5,
                 ),
                 boxShadow: [
@@ -283,7 +283,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
-                              color: isDark ? AppColors.surfaceSubtleDark : const Color(0xFFF1EFEA),
+                              color: isDark ? const Color(0xFF252834) : const Color(0xFFF1EFEA),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
@@ -291,7 +291,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               style: TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? AppColors.inkPrimaryDark : AppColors.inkPrimaryLight,
+                                color: isDark ? Colors.white : AppColors.inkPrimaryLight,
                               ),
                             ),
                           ),
@@ -302,7 +302,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Divider(
                     height: 1,
                     indent: 74,
-                    color: isDark ? AppColors.borderDark : const Color(0xFFF1EFEA),
+                    color: isDark ? AppColors.dividerDark : const Color(0xFFF1EFEA),
                   ),
 
                   // ROW 2: On-Device Notes Folder
@@ -363,7 +363,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Divider(
                     height: 1,
                     indent: 74,
-                    color: isDark ? AppColors.borderDark : const Color(0xFFF1EFEA),
+                    color: isDark ? AppColors.dividerDark : const Color(0xFFF1EFEA),
                   ),
 
                   // ROW 3: Export Full Backup (.ZIP)
@@ -429,7 +429,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Divider(
                     height: 1,
                     indent: 74,
-                    color: isDark ? AppColors.borderDark : const Color(0xFFF1EFEA),
+                    color: isDark ? AppColors.dividerDark : const Color(0xFFF1EFEA),
                   ),
 
                   // ROW 4: Encrypted Drive Backup
@@ -511,9 +511,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Container(
               decoration: BoxDecoration(
                 color: isDark ? AppColors.surfaceDark : Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                borderRadius: BorderRadius.circular(26),
+                border: isDark ? null : Border.all(
+                  color: AppColors.borderLight,
                   width: 1.5,
                 ),
               ),
@@ -546,7 +546,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Divider(
                     height: 1,
                     indent: 60,
-                    color: isDark ? AppColors.borderDark : const Color(0xFFF1EFEA),
+                    color: isDark ? AppColors.dividerDark : const Color(0xFFF1EFEA),
                   ),
                   ListTile(
                     leading: Container(
@@ -572,7 +572,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   if (widget.onRelaunchWalkthrough != null) ...[
-                    const Divider(height: 1),
+                    Divider(height: 1, indent: 60, color: isDark ? AppColors.dividerDark : const Color(0xFFF1EFEA)),
                     ListTile(
                       leading: Container(
                         padding: const EdgeInsets.all(8),

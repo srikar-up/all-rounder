@@ -55,6 +55,36 @@ class FilesNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
+  static const String defaultMagazineTemplate = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>New Magazine Note</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; padding: 20px; }
+    .byline { font-size: 12px; color: #6E717A; font-weight: 600; margin-bottom: 16px; }
+    .pull-quote { border-left: 4px solid #6246EA; padding-left: 16px; margin: 20px 0; font-size: 17px; font-weight: 700; font-style: italic; color: #6246EA; }
+    .image-placeholder { background: #F1EFEA; border: 2px dashed #9CA0AB; border-radius: 16px; padding: 28px; text-align: center; color: #6E717A; font-weight: 700; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <h1>The Architecture of Thought</h1>
+  <div class="byline">By Anna Lane · Field Journal Entry</div>
+  
+  <p>Exploring how personal spatial organisation shapes memory retention and creative synthesis across multimodal documents.</p>
+  
+  <div class="pull-quote">
+    "Structure is not the cage of creativity, but the trellis upon which insight climbs."
+  </div>
+  
+  <p>When notes, magazine zines, and connected alarms operate synchronously on-device, the cognitive load of context switching collapses to zero.</p>
+  
+  <div class="image-placeholder">
+    <img src="attachments/figure1.png" alt="Attach Image or Diagram Here" />
+  </div>
+</body>
+</html>''';
+
   void updateHtmlDoc(String id, String newContent) {
     final index = _items.indexWhere((item) => item.id == id);
     if (index != -1) {
@@ -64,6 +94,22 @@ class FilesNotifier extends ChangeNotifier {
       );
       notifyListeners();
     }
+  }
+
+  WorkspaceFileItem createHtmlNote({String? title, String? content}) {
+    final now = DateTime.now();
+    final item = WorkspaceFileItem(
+      id: 'html_${now.millisecondsSinceEpoch}',
+      name: title ?? 'Untitled Magazine Note.html',
+      type: FileType.html,
+      folder: 'HTML Magazine Documents',
+      size: '4 KB',
+      updatedAt: now,
+      colorHex: '#6246EA',
+      content: content ?? defaultMagazineTemplate,
+    );
+    addFile(item);
+    return item;
   }
 
   void _initSampleData() {

@@ -5,16 +5,17 @@ import 'package:flutter/material.dart';
 class AppColors {
   // Canvas & Surfaces
   static const Color canvasLight = Color(0xFFFAF8F5); // Warm Alabaster canvas
-  static const Color canvasDark = Color(0xFF0F1015);  // Deep Obsidian night
+  static const Color canvasDark = Color(0xFF0F1015);  // Deep Obsidian night (--bg-canvas)
   
   static const Color surfaceLight = Color(0xFFFFFFFF); // Elevated Pure White card
-  static const Color surfaceDark = Color(0xFF181A22);  // Night elevated card
+  static const Color surfaceDark = Color(0xFF1A1C24);  // Elevated Slate Dark card (--bg-surface)
   
   static const Color surfaceSubtleLight = Color(0xFFF1EFEA); // Inactive pill / search fill
-  static const Color surfaceSubtleDark = Color(0xFF222530);  // Dark inactive pill
+  static const Color surfaceSubtleDark = Color(0xFF252834);  // Dark inactive pill (--bg-subtle)
   
   static const Color borderLight = Color(0x0F141416); // Subtle 6% border
-  static const Color borderDark = Color(0x1FFFFFFF);  // Subtle dark border
+  static const Color borderDark = Colors.transparent; // No harsh borders in dark mode
+  static const Color dividerDark = Color(0x0EFFFFFF); // Subtle blended divider in dark mode
 
   // Inks & Typography
   static const Color inkPrimaryLight = Color(0xFF141416);   // Deep obsidian ink

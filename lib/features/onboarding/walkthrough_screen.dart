@@ -357,8 +357,8 @@ class _WalkthroughScreenState extends State<WalkthroughScreen> {
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        border: isDark ? null : Border.all(
+          color: AppColors.borderLight,
         ),
       ),
       child: Row(
@@ -850,10 +850,9 @@ class _WalkthroughScreenState extends State<WalkthroughScreen> {
             decoration: BoxDecoration(
               color: isDark ? AppColors.surfaceDark : Colors.white,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: _hasLinkedDemo ? AppColors.iris : (isDark ? AppColors.borderDark : AppColors.borderLight),
-                width: 1.5,
-              ),
+              border: _hasLinkedDemo
+                  ? Border.all(color: AppColors.iris, width: 1.5)
+                  : (isDark ? null : Border.all(color: AppColors.borderLight, width: 1.5)),
             ),
             child: Row(
               children: [

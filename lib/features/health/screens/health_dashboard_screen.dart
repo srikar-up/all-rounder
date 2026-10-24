@@ -298,8 +298,8 @@ class HealthDashboardScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isDark ? AppColors.surfaceDark : Colors.white,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                border: isDark ? null : Border.all(
+                  color: AppColors.borderLight,
                   width: 1.5,
                 ),
                 boxShadow: [
@@ -578,8 +578,8 @@ class HealthDashboardScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        border: isDark ? null : Border.all(
+          color: AppColors.borderLight,
           width: 1.5,
         ),
         boxShadow: [

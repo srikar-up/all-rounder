@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'core/services/preferences_service.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'features/files/file_service.dart';
 import 'features/files/models/file_item.dart';
 import 'features/files/screens/file_manager_screen.dart';
 import 'features/files/screens/html_viewer_screen.dart';
@@ -45,6 +47,7 @@ class _AllRounderAppState extends State<AllRounderApp> {
   late final TimeNotifier _timeNotifier;
   late final HealthNotifier _healthNotifier;
   late final VaultNotifier _vaultNotifier;
+  late final FileService _fileService;
 
   @override
   void initState() {
@@ -56,6 +59,11 @@ class _AllRounderAppState extends State<AllRounderApp> {
     _timeNotifier = TimeNotifier();
     _healthNotifier = HealthNotifier();
     _vaultNotifier = VaultNotifier();
+    _fileService = FileService('app_storage/AllRounder');
+    if (!kIsWeb) {
+      _fileService.initRoot();
+      Future.microtask(() => _fileService.purgeOld(days: 30));
+    }
   }
 
   @override
@@ -65,6 +73,7 @@ class _AllRounderAppState extends State<AllRounderApp> {
     _timeNotifier.dispose();
     _healthNotifier.dispose();
     _vaultNotifier.dispose();
+    _fileService.dispose();
     super.dispose();
   }
 
@@ -89,6 +98,7 @@ class _AllRounderAppState extends State<AllRounderApp> {
               timeNotifier: _timeNotifier,
               healthNotifier: _healthNotifier,
               vaultNotifier: _vaultNotifier,
+              fileService: _fileService,
               isDarkMode: _isDarkMode,
               onThemeChanged: _toggleTheme,
               onRelaunchWalkthrough: () {
@@ -110,6 +120,7 @@ class AppMainShell extends StatefulWidget {
   final TimeNotifier timeNotifier;
   final HealthNotifier healthNotifier;
   final VaultNotifier vaultNotifier;
+  final FileService fileService;
   final bool isDarkMode;
   final ValueChanged<bool> onThemeChanged;
   final VoidCallback? onRelaunchWalkthrough;
@@ -121,6 +132,7 @@ class AppMainShell extends StatefulWidget {
     required this.timeNotifier,
     required this.healthNotifier,
     required this.vaultNotifier,
+    required this.fileService,
     required this.isDarkMode,
     required this.onThemeChanged,
     this.onRelaunchWalkthrough,
@@ -238,18 +250,16 @@ class _AppMainShellState extends State<AppMainShell> {
                     bgTint: const Color(0xFFFFF4DC),
                     onTap: () {
                       Navigator.pop(ctx);
-                      final htmlDocs = widget.filesNotifier.htmlDocuments;
-                      if (htmlDocs.isNotEmpty) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => HtmlViewerScreen(
-                              fileItem: htmlDocs.first,
-                              filesNotifier: widget.filesNotifier,
-                            ),
+                      final newDoc = widget.filesNotifier.createHtmlNote();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => HtmlViewerScreen(
+                            fileItem: newDoc,
+                            filesNotifier: widget.filesNotifier,
                           ),
-                        );
-                      }
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -310,10 +320,12 @@ class _AppMainShellState extends State<AppMainShell> {
         decoration: BoxDecoration(
           color: widget.isDarkMode ? color.withAlpha(35) : bgTint,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: color.withAlpha(widget.isDarkMode ? 70 : 35),
-            width: 1.2,
-          ),
+          border: widget.isDarkMode
+              ? null
+              : Border.all(
+                  color: color.withAlpha(35),
+                  width: 1.2,
+                ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -373,6 +385,8 @@ class _AppMainShellState extends State<AppMainShell> {
           ),
           FileManagerScreen(
             filesNotifier: widget.filesNotifier,
+            fileService: widget.fileService,
+            notesNotifier: widget.notesNotifier,
             onBackToHub: () => setState(() => _currentIndex = 0),
             onOpenSettings: _openSettings,
           ),
@@ -476,7 +490,7 @@ class _AppMainShellState extends State<AppMainShell> {
                         // Nav 4: Biometric Vault & Settings
                         _buildDockCircleItem(
                           index: 4,
-                          icon: Icons.tune_rounded,
+                          icon: Icons.shield_outlined,
                           tooltip: 'Settings',
                           isDark: isDark,
                         ),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../html_render/html_note_view.dart';
+import '../../html_render/html_sanitizer.dart';
 import '../models/file_item.dart';
 import '../state/files_notifier.dart';
 
@@ -19,6 +22,7 @@ class HtmlViewerScreen extends StatefulWidget {
 
 class _HtmlViewerScreenState extends State<HtmlViewerScreen> {
   int _viewMode = 0; // 0 = Rendered Magazine View, 1 = Edit HTML/CSS Source
+  bool _applyAppTheme = true; // Phase 5: "Use app theme" toggle
   late TextEditingController _codeController;
 
   @override
@@ -29,6 +33,8 @@ class _HtmlViewerScreenState extends State<HtmlViewerScreen> {
 
   @override
   void dispose() {
+    // Auto-persist latest source edits when exiting viewer
+    widget.filesNotifier.updateHtmlDoc(widget.fileItem.id, _codeController.text);
     _codeController.dispose();
     super.dispose();
   }
@@ -36,8 +42,23 @@ class _HtmlViewerScreenState extends State<HtmlViewerScreen> {
   void _saveChanges() {
     widget.filesNotifier.updateHtmlDoc(widget.fileItem.id, _codeController.text);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('HTML Document saved offline.')),
+      const SnackBar(
+        duration: Duration(seconds: 2),
+        content: Text('HTML Document saved offline.'),
+      ),
     );
+  }
+
+  String _getDisplayBadge() {
+    try {
+      final sanitized = HtmlSanitizer.sanitize(_codeController.text);
+      if (sanitized.title.isNotEmpty) {
+        return sanitized.title.toUpperCase();
+      }
+    } catch (_) {}
+    return widget.fileItem.name
+        .replaceAll(RegExp(r'\.html$', caseSensitive: false), '')
+        .toUpperCase();
   }
 
   @override
@@ -80,6 +101,26 @@ class _HtmlViewerScreenState extends State<HtmlViewerScreen> {
           ],
         ),
         actions: [
+          // Phase 5: "Use app theme" toggle
+          IconButton(
+            icon: Icon(
+              _applyAppTheme ? Icons.palette_rounded : Icons.palette_outlined,
+              color: _applyAppTheme ? AppColors.iris : (isDark ? Colors.white70 : Colors.black54),
+              size: 20,
+            ),
+            tooltip: _applyAppTheme ? 'App Theme: Enabled' : 'App Theme: Custom (Raw CSS)',
+            onPressed: () {
+              setState(() => _applyAppTheme = !_applyAppTheme);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  duration: const Duration(seconds: 1),
+                  content: Text(_applyAppTheme
+                      ? 'App theme styles enabled.'
+                      : 'Custom styles only (app theme disabled).'),
+                ),
+              );
+            },
+          ),
           if (_viewMode == 1)
             IconButton(
               icon: const Icon(Icons.check_rounded, color: AppColors.bentoEmerald),
@@ -123,7 +164,7 @@ class _HtmlViewerScreenState extends State<HtmlViewerScreen> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            '🎨 Rendered Magazine',
+                            '🎨 Rendered Magazine View',
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w800,
@@ -156,7 +197,7 @@ class _HtmlViewerScreenState extends State<HtmlViewerScreen> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            '💻 Edit HTML / CSS',
+                            '💻 Edit HTML / CSS Source',
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w800,
@@ -188,195 +229,67 @@ class _HtmlViewerScreenState extends State<HtmlViewerScreen> {
   Widget _buildRenderedMagazineView(BuildContext context, bool isDark) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-      padding: const EdgeInsets.all(20),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFF141416),
-        borderRadius: BorderRadius.circular(28),
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: isDark ? null : Border.all(color: AppColors.borderLight, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(45),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            color: Colors.black.withAlpha(isDark ? 30 : 10),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: ListView(
+      child: Column(
         children: [
-          // Top metadata
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.bentoMarigold.withAlpha(30),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: const Text(
-                  'PHYS-301 · VISUAL ZINE',
-                  style: TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
-                    color: AppColors.bentoMarigold,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(20),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'JS: OFF · OFFLINE',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontFamily: 'monospace',
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white70,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Magazine Headline
-          const Text(
-            'Schrödinger Wave Equation & Probability Density',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              height: 1.2,
-              letterSpacing: -0.4,
-              color: Color(0xFFB4D2FF),
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // Paragraph
-          Text(
-            'Unlike plain Markdown, this sandboxed .html document renders custom CSS grid cards, magazine typography, and formulas right inside your workspace.',
-            style: TextStyle(
-              fontSize: 12.5,
-              height: 1.5,
-              color: Colors.white.withAlpha(210),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // 2 Formula Bento Cards (CSS Grid representation)
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(18),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.white.withAlpha(25), width: 1.5),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Time-Dependent',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.bentoMarigold,
-                        ),
-                      ),
-                      SizedBox(height: 6),
-                      Text(
-                        'iℏ ∂Ψ/∂t = ĤΨ',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          fontFamily: 'monospace',
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(18),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.white.withAlpha(25), width: 1.5),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Born Rule',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF3CC162),
-                        ),
-                      ),
-                      SizedBox(height: 6),
-                      Text(
-                        'P(x) = |Ψ(x,t)|²',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          fontFamily: 'monospace',
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-
-          // Linked Folder Image Box
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.iris.withAlpha(35),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.iris.withAlpha(120), width: 1.5),
-            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Linked Folder Image',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      '/Lectures/Images/Quantum_Well.png',
-                      style: TextStyle(fontSize: 10.5, color: Colors.white70),
-                    ),
-                  ],
-                ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.bentoMarigold.withAlpha(30),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Text(
-                    'View Image',
-                    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: AppColors.inkPrimaryLight),
+                  child: Text(
+                    _getDisplayBadge(),
+                    style: const TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.8,
+                      color: AppColors.bentoMarigold,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withAlpha(15) : Colors.black.withAlpha(10),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    _applyAppTheme ? 'THEME: APP' : 'THEME: RAW',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
                   ),
                 ),
               ],
+            ),
+          ),
+          Divider(height: 1, color: isDark ? AppColors.dividerDark : const Color(0x14000000)),
+          Expanded(
+            child: HtmlNoteView(
+              rawHtml: _codeController.text,
+              attachmentsDir: 'attachments',
+              applyAppTheme: _applyAppTheme,
             ),
           ),
         ],
@@ -385,29 +298,197 @@ class _HtmlViewerScreenState extends State<HtmlViewerScreen> {
   }
 
   Widget _buildSourceEditorView(BuildContext context, bool isDark) {
+    const editorBg = Color(0xFF0F1117);
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-      padding: const EdgeInsets.all(14),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFF0F1015),
+        color: editorBg,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withAlpha(20), width: 1.5),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : const Color(0xFF2A2D3D),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(isDark ? 50 : 25),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: TextField(
-        controller: _codeController,
-        maxLines: null,
-        expands: true,
-        style: const TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 12,
-          color: Color(0xFFE2E8F0),
-          height: 1.45,
-        ),
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          hintText: '<html>\n  <style>...</style>\n  <body>...</body>\n</html>',
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Top IDE Header Bar
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 14, 10),
+            decoration: const BoxDecoration(
+              color: Color(0xFF161822),
+              border: Border(
+                bottom: BorderSide(color: Color(0x1FFFFFFF), width: 1),
+              ),
+            ),
+            child: Row(
+              children: [
+                // Window traffic dots
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 9,
+                      height: 9,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFF5F56),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      width: 9,
+                      height: 9,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFFBD2E),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      width: 9,
+                      height: 9,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF27C93F),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+                // File name label
+                Expanded(
+                  child: Text(
+                    widget.fileItem.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFCBD5E1),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Live Line Count Badge
+                AnimatedBuilder(
+                  animation: _codeController,
+                  builder: (context, _) {
+                    final lines = _codeController.text.split('\n').length;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '$lines lines',
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF94A3B8),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 6),
+                // HTML/CSS Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: AppColors.iris.withAlpha(40),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: AppColors.iris.withAlpha(80), width: 0.8),
+                  ),
+                  child: const Text(
+                    'HTML / CSS',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.irisLight,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                // Copy button
+                IconButton(
+                  icon: const Icon(Icons.copy_rounded, size: 16, color: Color(0xFF94A3B8)),
+                  tooltip: 'Copy Source Code',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: _codeController.text));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        duration: Duration(seconds: 1),
+                        content: Text('HTML source copied to clipboard.'),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // Code Text Area with explicit border overrides preventing oval/egg clipping
+          Expanded(
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                textSelectionTheme: TextSelectionThemeData(
+                  cursorColor: AppColors.irisLight,
+                  selectionColor: AppColors.iris.withAlpha(90),
+                  selectionHandleColor: AppColors.irisLight,
+                ),
+              ),
+              child: TextField(
+                controller: _codeController,
+                maxLines: null,
+                expands: true,
+                textAlignVertical: TextAlignVertical.top,
+                keyboardType: TextInputType.multiline,
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 12.5,
+                  color: Color(0xFFE2E8F0),
+                  height: 1.55,
+                  letterSpacing: 0.25,
+                ),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  filled: false,
+                  fillColor: Colors.transparent,
+                  contentPadding: EdgeInsets.all(16),
+                  hintText: '<!DOCTYPE html>\n<html>\n  <head>\n    <style>...</style>\n  </head>\n  <body>...</body>\n</html>',
+                  hintStyle: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
+

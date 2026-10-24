@@ -156,73 +156,79 @@ class _TimeScreenState extends State<TimeScreen> with SingleTickerProviderStateM
             SizedBox(
               height: 72,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(7, (i) {
                   final item = _weekDays[i];
                   final isSelected = _selectedDayIndex == i;
 
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedDayIndex = i),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      width: 44,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.inkPrimaryLight // Solid Obsidian Black for Active (Wed 25)
-                            : (isDark ? AppColors.surfaceDark : Colors.white),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: isSelected
-                              ? Colors.transparent
-                              : (isDark ? AppColors.borderDark : const Color(0xFFE8E6E1)),
-                          width: 1.5,
-                        ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: Colors.black.withAlpha(40),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 5),
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedDayIndex = i),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          height: 72,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.inkPrimaryLight // Solid Obsidian Black for Active (Wed 25)
+                                : (isDark ? AppColors.surfaceDark : Colors.white),
+                            borderRadius: BorderRadius.circular(999),
+                            border: isSelected || isDark
+                                ? null
+                                : Border.all(
+                                    color: const Color(0xFFE8E6E1),
+                                    width: 1.5,
+                                  ),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(40),
+                                      blurRadius: 14,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Top Status Dot
+                              Container(
+                                width: 5,
+                                height: 5,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isSelected ? AppColors.bentoMarigold : (item['dot'] as Color),
                                 ),
-                              ]
-                            : null,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Top Status Dot
-                          Container(
-                            width: 5,
-                            height: 5,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isSelected ? AppColors.bentoMarigold : (item['dot'] as Color),
-                            ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                item['day'] as String,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: isSelected
+                                      ? Colors.white.withAlpha(190)
+                                      : (isDark ? AppColors.inkSecondaryDark : AppColors.inkSecondaryLight),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                item['date'] as String,
+                                maxLines: 1,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : (isDark ? AppColors.inkPrimaryDark : AppColors.inkPrimaryLight),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            item['day'] as String,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: isSelected
-                                  ? Colors.white.withAlpha(190)
-                                  : (isDark ? AppColors.inkSecondaryDark : AppColors.inkSecondaryLight),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            item['date'] as String,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
-                              color: isSelected
-                                  ? Colors.white
-                                  : (isDark ? AppColors.inkPrimaryDark : AppColors.inkPrimaryLight),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   );
@@ -612,8 +618,8 @@ class _TimeScreenState extends State<TimeScreen> with SingleTickerProviderStateM
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        border: isDark ? null : Border.all(
+          color: AppColors.borderLight,
           width: 1.5,
         ),
         boxShadow: [

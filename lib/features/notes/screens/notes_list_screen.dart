@@ -324,12 +324,12 @@ class _NotesListScreenState extends State<NotesListScreen> {
               const SizedBox(height: 24),
             ],
 
-            // 6. RECENT MARKDOWN FILES SECTION (Matching Image 1 bottom peek)
+            // 6. RECENT FILES & DOCUMENTS (Matching Prototype lines 652-700 & Screenshot 1)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  widget.notesNotifier.showTrash ? 'Trash Files' : 'Recent Markdown Files',
+                  widget.notesNotifier.showTrash ? 'Trash Files' : 'Recent Files & Documents',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -337,23 +337,110 @@ class _NotesListScreenState extends State<NotesListScreen> {
                     color: isDark ? AppColors.inkPrimaryDark : AppColors.inkPrimaryLight,
                   ),
                 ),
-                Text(
-                  widget.notesNotifier.showTrash ? 'Deleted' : 'On-device .md',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.inkSecondaryDark : AppColors.inkSecondaryLight,
+                GestureDetector(
+                  onTap: () {
+                    if (widget.onOpenFileManager != null) {
+                      widget.onOpenFileManager!();
+                    }
+                  },
+                  child: Text(
+                    widget.notesNotifier.showTrash ? 'Deleted' : '+ Upload File/Image',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      color: widget.notesNotifier.showTrash
+                          ? (isDark ? AppColors.inkSecondaryDark : AppColors.inkSecondaryLight)
+                          : AppColors.iris,
+                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
 
-            // Recent Notes List Cards
-            if (notes.isEmpty)
-              _buildEmptyState(context, isDark)
-            else
-              ...notes.map((note) => _buildRecentNoteCard(context, note, isDark)),
+            // When in normal mode and not filtering, show featured recent documents matching Screenshot 1
+            if (!widget.notesNotifier.showTrash && !_isSearchOpen && widget.notesNotifier.selectedFolder == 'All' && widget.notesNotifier.selectedTag == null) ...[
+              // Item 1: HTML Document (Periodic Table Reference.html)
+              _buildRecentFileItemCard(
+                context: context,
+                title: 'Periodic Table Reference.html',
+                subtitle: 'Sandboxed HTML/CSS grid · Offline ready',
+                badgeText: '.html',
+                iconBg: isDark ? const Color(0xFF2C2415) : const Color(0xFFFFF4DC),
+                iconColor: const Color(0xFFD98200),
+                icon: Icons.language_rounded,
+                iconLabel: 'HTML',
+                badgeBg: isDark ? const Color(0xFF2C2415) : const Color(0xFFFFF4DC),
+                badgeTextColor: const Color(0xFFB86B00),
+                isDark: isDark,
+                onTap: () {
+                  final htmlDocs = widget.filesNotifier?.htmlDocuments;
+                  if (htmlDocs != null && htmlDocs.isNotEmpty) {
+                    final targetDoc = htmlDocs.firstWhere(
+                      (d) => d.name.contains('Periodic Table'),
+                      orElse: () => htmlDocs.first,
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => HtmlViewerScreen(
+                          fileItem: targetDoc,
+                          filesNotifier: widget.filesNotifier!,
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
+
+              // Item 2: Standalone Image File (Whiteboard_Schrodinger_Eq.png)
+              _buildRecentFileItemCard(
+                context: context,
+                title: 'Whiteboard_Schrodinger_Eq.png',
+                subtitle: 'Folder: /Lectures/Images · 1.8 MB',
+                badgeText: 'Image',
+                iconBg: isDark ? const Color(0xFF331F1C) : const Color(0xFFFFE6E2),
+                iconColor: AppColors.bentoCoral,
+                icon: Icons.image_outlined,
+                iconLabel: 'PNG',
+                badgeBg: isDark ? const Color(0xFF331F1C) : const Color(0xFFFFE6E2),
+                badgeTextColor: AppColors.bentoCoral,
+                isDark: isDark,
+                onTap: () {
+                  _showImageLightboxDialog(
+                    context,
+                    'Whiteboard_Schrodinger_Eq.png',
+                    'Folder: /Lectures/Images · 1.8 MB PNG',
+                  );
+                },
+              ),
+
+              // Item 3: Standalone PDF (Syllabus_Autumn_2026.pdf)
+              _buildRecentFileItemCard(
+                context: context,
+                title: 'Syllabus_Autumn_2026.pdf',
+                subtitle: 'Folder: /Lectures/Handouts · 4.2 MB',
+                badgeText: '.pdf',
+                iconBg: isDark ? const Color(0xFF222038) : const Color(0xFFEAE6FD),
+                iconColor: AppColors.iris,
+                icon: Icons.description_outlined,
+                iconLabel: 'PDF',
+                badgeBg: isDark ? const Color(0xFF222038) : const Color(0xFFEAE6FD),
+                badgeTextColor: AppColors.iris,
+                isDark: isDark,
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Opening Syllabus_Autumn_2026.pdf from /Handouts...')),
+                  );
+                },
+              ),
+            ] else ...[
+              // Recent Notes List Cards when searching, filtering or in trash
+              if (notes.isEmpty)
+                _buildEmptyState(context, isDark)
+              else
+                ...notes.map((note) => _buildRecentNoteCard(context, note, isDark)),
+            ],
           ],
         ),
       ),
@@ -693,26 +780,31 @@ class _NotesListScreenState extends State<NotesListScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Container(
-                            width: 38,
-                            height: 38,
+                            width: 34,
+                            height: 34,
                             decoration: BoxDecoration(
                               color: Colors.white.withAlpha(50),
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Icons.image_outlined, color: Colors.white, size: 20),
+                            child: const Icon(Icons.image_outlined, color: Colors.white, size: 19),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withAlpha(50),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: const Text(
-                              '8 Images',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withAlpha(50),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Text(
+                                '8 Images',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
@@ -723,8 +815,10 @@ class _NotesListScreenState extends State<NotesListScreen> {
                         children: [
                           Text(
                             'Whiteboard & Photos',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 13.5,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
                               height: 1.15,
@@ -733,8 +827,10 @@ class _NotesListScreenState extends State<NotesListScreen> {
                           SizedBox(height: 2),
                           Text(
                             'Standalone PNG, JPG & scans',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 9.5,
                               fontWeight: FontWeight.w600,
                               color: Colors.white70,
                             ),
@@ -778,26 +874,31 @@ class _NotesListScreenState extends State<NotesListScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Container(
-                            width: 38,
-                            height: 38,
+                            width: 34,
+                            height: 34,
                             decoration: BoxDecoration(
                               color: Colors.white.withAlpha(50),
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Icons.code_rounded, color: Colors.white, size: 20),
+                            child: const Icon(Icons.code_rounded, color: Colors.white, size: 19),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withAlpha(60),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: const Text(
-                              '3 .HTML',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withAlpha(60),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Text(
+                                '3 .HTML',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
@@ -808,8 +909,10 @@ class _NotesListScreenState extends State<NotesListScreen> {
                         children: [
                           Text(
                             'HTML Documents',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 13.5,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
                               height: 1.15,
@@ -818,8 +921,10 @@ class _NotesListScreenState extends State<NotesListScreen> {
                           SizedBox(height: 2),
                           Text(
                             'Custom CSS zines & sheets',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 9.5,
                               fontWeight: FontWeight.w600,
                               color: Colors.white70,
                             ),
@@ -981,8 +1086,8 @@ class _NotesListScreenState extends State<NotesListScreen> {
                   if (note != null) _navigateToEditor(context, note);
                 },
                 child: Container(
-                  height: 106,
-                  padding: const EdgeInsets.all(14),
+                  height: 107,
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
                   decoration: BoxDecoration(
                     color: AppColors.bentoPeriwinkle,
                     borderRadius: BorderRadius.circular(26),
@@ -1022,7 +1127,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
                       Text(
                         'Physics Lecture\nNotes',
                         style: TextStyle(
-                          fontSize: 14.5,
+                          fontSize: 14,
                           fontWeight: FontWeight.w900,
                           letterSpacing: -0.3,
                           color: AppColors.inkPrimaryLight,
@@ -1053,8 +1158,8 @@ class _NotesListScreenState extends State<NotesListScreen> {
                   );
                 },
                 child: Container(
-                  height: 108,
-                  padding: const EdgeInsets.all(14),
+                  height: 107,
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFA3EC),
                     borderRadius: BorderRadius.circular(26),
@@ -1212,21 +1317,135 @@ class _NotesListScreenState extends State<NotesListScreen> {
     );
   }
 
+  Widget _buildRecentFileItemCard({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required String badgeText,
+    required Color iconBg,
+    required Color iconColor,
+    required IconData icon,
+    required String iconLabel,
+    required Color badgeBg,
+    required Color badgeTextColor,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: isDark ? null : Border.all(
+          color: AppColors.borderLight,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(isDark ? 20 : 6),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, size: 20, color: iconColor),
+                    const SizedBox(height: 1),
+                    Text(
+                      iconLabel,
+                      style: TextStyle(
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.w900,
+                        color: iconColor,
+                        height: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.2,
+                        color: isDark ? AppColors.inkPrimaryDark : AppColors.inkPrimaryLight,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: isDark ? AppColors.inkSecondaryDark : AppColors.inkSecondaryLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  badgeText,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    color: badgeTextColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildRecentNoteCard(BuildContext context, NoteModel note, bool isDark) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        border: isDark ? null : Border.all(
+          color: AppColors.borderLight,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(isDark ? 25 : 8),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
+            color: Colors.black.withAlpha(isDark ? 20 : 6),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -1243,8 +1462,8 @@ class _NotesListScreenState extends State<NotesListScreen> {
                 height: 48,
                 decoration: BoxDecoration(
                   color: note.folder == 'Lectures'
-                      ? (isDark ? const Color(0xFF4A2522) : AppColors.bentoCoralSubtle)
-                      : (isDark ? const Color(0xFF1B3826) : AppColors.bentoEmeraldSubtle),
+                      ? (isDark ? const Color(0xFF331F1C) : AppColors.bentoCoralSubtle)
+                      : (isDark ? const Color(0xFF1B2E22) : AppColors.bentoEmeraldSubtle),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
