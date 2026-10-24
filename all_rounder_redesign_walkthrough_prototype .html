@@ -1,0 +1,2038 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>All-Rounder · Tactile Bento Design System & Interactive Prototype</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --bg-canvas: #FAF8F5;
+      --bg-surface: #FFFFFF;
+      --bg-subtle: #F1EFEA;
+      --ink-primary: #141416;
+      --ink-secondary: #6E717A;
+      --brand-iris: #6246EA;
+      --bento-marigold: #FDBE58;
+      --bento-coral: #FF6B57;
+      --bento-periwinkle: #B4D2FF;
+      --bento-lavender: #B19CFF;
+      --bento-emerald: #3CC162;
+      --bento-pink: #FF9CE9;
+      --dock-bg: #141416;
+    }
+
+    .phone-dark {
+      --bg-canvas: #0F1015;
+      --bg-surface: #1A1C24;
+      --bg-subtle: #252834;
+      --ink-primary: #F5F6FA;
+      --ink-secondary: #9CA0AB;
+      --dock-bg: #222532;
+    }
+
+    * {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Custom Scrollbar inside Phone */
+    .phone-scroll::-webkit-scrollbar {
+      width: 0px;
+      background: transparent;
+    }
+
+    /* Subtle side notch inspired by Target Image 2 */
+    .bento-notch {
+      position: relative;
+    }
+
+    .bento-notch::after {
+      content: '';
+      position: absolute;
+      right: -10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 22px;
+      height: 28px;
+      background-color: var(--bg-canvas);
+      border-radius: 999px;
+      transition: background-color 0.25s ease;
+    }
+
+    /* Folder Top Tab Effect */
+    .folder-tab {
+      position: relative;
+    }
+
+    .folder-tab::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 18px;
+      width: 48px;
+      height: 12px;
+      border-radius: 8px 8px 0 0;
+      background-color: inherit;
+      opacity: 0.85;
+    }
+
+    /* Smooth transitions */
+    .bento-card {
+      transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease;
+    }
+
+    .bento-card:active {
+      transform: scale(0.97);
+    }
+
+    @keyframes pulseRing {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(98, 70, 234, 0.5);
+      }
+
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(98, 70, 234, 0);
+      }
+
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(98, 70, 234, 0);
+      }
+    }
+
+    .pulse-cta {
+      animation: pulseRing 2s infinite;
+    }
+  </style>
+</head>
+
+<body
+  class="bg-[#ECEAE4] text-[#141416] min-h-screen flex flex-col lg:flex-row items-center lg:items-start justify-center p-4 lg:p-8 gap-8">
+
+  <!-- Hidden file input so user can test uploading real images/files into the phone simulator -->
+  <input type="file" id="real-file-input" class="hidden" multiple accept="image/*,.pdf,.html,.md,.txt"
+    onchange="handleRealFileUpload(event)" />
+
+  <!-- LEFT PANEL: INTERACTIVE MOBILE SIMULATOR -->
+  <div class="flex flex-col items-center shrink-0">
+    <!-- Top Mode Switcher Bar above Phone -->
+    <div
+      class="flex items-center gap-2 bg-white/90 backdrop-blur-md p-1.5 rounded-full shadow-sm mb-4 border border-black/5">
+      <button id="btn-mode-walkthrough" onclick="setAppMode('walkthrough')"
+        class="px-4 py-1.5 rounded-full text-xs font-bold transition-all text-[#6E717A] hover:text-[#141416]">
+        ✨ 1. User Walkthrough
+      </button>
+      <button id="btn-mode-app" onclick="setAppMode('app')"
+        class="px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-[#6246EA] text-white shadow-sm">
+        📱 2. Redesigned App
+      </button>
+      <button onclick="toggleDarkMode()"
+        class="w-8 h-8 rounded-full flex items-center justify-center bg-[#F1EFEA] hover:bg-[#E4E1DA] text-[#141416] transition-all"
+        title="Toggle Light/Dark Theme">
+        <i data-lucide="moon" class="w-4 h-4" id="theme-icon"></i>
+      </button>
+    </div>
+
+    <!-- iPhone / Modern Android Frame -->
+    <div id="phone-frame"
+      class="relative w-[382px] h-[812px] rounded-[54px] bg-[#141416] p-[11px] shadow-[0_32px_80px_rgba(20,20,22,0.28)] border-[3px] border-[#2C2D35] select-none overflow-hidden">
+
+      <!-- Inner Screen Canvas -->
+      <div id="screen-canvas"
+        class="relative w-full h-full rounded-[44px] bg-[var(--bg-canvas)] text-[var(--ink-primary)] flex flex-col overflow-hidden transition-colors duration-300">
+
+        <!-- Status Bar -->
+        <div class="h-12 px-7 pt-2 flex items-center justify-between text-xs font-bold shrink-0 z-30">
+          <span>9:41</span>
+          <div class="w-24 h-6 bg-[#141416] rounded-full flex items-center justify-end pr-2.5">
+            <div class="w-2 h-2 rounded-full bg-[#1E293B] ring-1 ring-indigo-500/40"></div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="signal" class="w-3.5 h-3.5"></i>
+            <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+            <i data-lucide="battery-full" class="w-4 h-4"></i>
+          </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- MODE A: FIRST-TIME USER WALKTHROUGH (3-STEP INTERACTIVE)  -->
+        <!-- ========================================================= -->
+        <div id="walkthrough-container"
+          class="hidden flex-1 flex flex-col justify-between px-5 pb-6 pt-2 overflow-y-auto phone-scroll">
+
+          <!-- Step Indicator Pills -->
+          <div class="flex items-center justify-between">
+            <div class="flex gap-1.5">
+              <div id="wt-dot-1" class="h-2 w-8 rounded-full bg-[#6246EA] transition-all"></div>
+              <div id="wt-dot-2" class="h-2 w-2 rounded-full bg-[#D8D5CE] transition-all"></div>
+              <div id="wt-dot-3" class="h-2 w-2 rounded-full bg-[#D8D5CE] transition-all"></div>
+            </div>
+            <button onclick="setAppMode('app')"
+              class="text-xs font-bold text-[var(--ink-secondary)] hover:text-[#6246EA]">
+              Skip to App →
+            </button>
+          </div>
+
+          <!-- WALKTHROUGH STEP 1: SIMPLE POSITIONING & PERSONAL GREETING -->
+          <div id="wt-step-1" class="flex-1 flex flex-col justify-between mt-4">
+            <div>
+              <div class="relative rounded-[30px] bg-[#B19CFF] p-6 text-[#141416] overflow-hidden shadow-sm">
+                <span
+                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/40 backdrop-blur-sm mb-3">
+                  🔒 100% On-Device · Zero Cloud
+                </span>
+                <h2 class="text-[24px] font-extrabold leading-[1.15] tracking-tight max-w-[200px]">
+                  Notes, HTML docs, media & your day.
+                </h2>
+                <p class="text-xs font-semibold text-[#141416]/75 mt-2 max-w-[205px]">
+                  Markdown notes, custom HTML pages, image/file folders, and alarms that talk to each other.
+                </p>
+                <div
+                  class="absolute -right-4 -bottom-4 w-28 h-28 rounded-[26px] bg-[#FDBE58] rotate-12 flex items-center justify-center shadow-md border-4 border-white/30">
+                  <div
+                    class="w-12 h-12 rounded-full bg-[#FF6B57] -rotate-12 flex items-center justify-center text-white font-extrabold text-lg shadow-inner">
+                    🔗
+                  </div>
+                </div>
+              </div>
+
+              <!-- Simple Positioning 3 Pillars -->
+              <div class="mt-4 space-y-2.5">
+                <div class="flex items-center gap-3 p-3 rounded-[20px] bg-[var(--bg-surface)] shadow-sm">
+                  <div
+                    class="w-10 h-10 rounded-[14px] bg-[#EAE6FD] text-[#6246EA] flex items-center justify-center font-bold shrink-0">
+                    <i data-lucide="file-code-2" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <div class="text-xs font-extrabold">Markdown + HTML Document System</div>
+                    <div class="text-[11px] text-[var(--ink-secondary)]">Write fast <span class="mono">.md</span> notes
+                      or rich magazine-style <span class="mono">.html</span> pages.</div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3 p-3 rounded-[20px] bg-[var(--bg-surface)] shadow-sm">
+                  <div
+                    class="w-10 h-10 rounded-[14px] bg-[#FFE6E2] text-[#FF6B57] flex items-center justify-center font-bold shrink-0">
+                    <i data-lucide="folder-heart" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <div class="text-xs font-extrabold">Dedicated Image & File Folders</div>
+                    <div class="text-[11px] text-[var(--ink-secondary)]">Organize standalone photos, PDFs, and assets in
+                      folders.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Personal Name Input -->
+              <div class="mt-4">
+                <label class="block text-xs font-bold text-[var(--ink-secondary)] mb-1.5">
+                  What should we call your space?
+                </label>
+                <input id="user-name-input" type="text" value="Anna Lane" oninput="updateUserName(this.value)"
+                  placeholder="Your first name..."
+                  class="w-full px-4 py-3 rounded-[18px] bg-[var(--bg-surface)] text-sm font-bold border-2 border-[#6246EA]/30 focus:border-[#6246EA] focus:outline-none shadow-sm" />
+              </div>
+            </div>
+
+            <button onclick="goToWalkthroughStep(2)"
+              class="w-full py-4 rounded-full bg-[#141416] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg hover:bg-[#6246EA] transition-all">
+              <span>Choose Your Bento Folders</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- WALKTHROUGH STEP 2: PICK YOUR BENTO SPACES -->
+          <div id="wt-step-2" class="hidden flex-1 flex flex-col justify-between mt-4">
+            <div>
+              <p class="text-xs font-semibold text-[var(--ink-secondary)]">Step 2 of 3 · Personalize</p>
+              <h2 class="text-[24px] font-extrabold leading-tight mt-0.5">
+                Pick your Bento folders
+              </h2>
+              <p class="text-xs text-[var(--ink-secondary)] mt-1">
+                Each folder holds Markdown notes, HTML docs, standalone images, and PDFs.
+              </p>
+
+              <!-- 2x2 Tactile Bento Grid with Notch -->
+              <div class="grid grid-cols-2 gap-3.5 mt-5">
+                <div onclick="toggleStarterSpace(this)" data-selected="true"
+                  class="bento-card bento-notch rounded-[26px] bg-[#6246EA] p-4 text-white h-[148px] flex flex-col justify-between cursor-pointer relative overflow-hidden">
+                  <div class="flex items-center justify-between">
+                    <div class="w-10 h-10 rounded-[14px] bg-white/20 flex items-center justify-center">
+                      <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                    </div>
+                    <span
+                      class="space-check w-6 h-6 rounded-full bg-white text-[#6246EA] flex items-center justify-center text-xs font-extrabold">✓</span>
+                  </div>
+                  <div>
+                    <div class="font-extrabold text-[17px]">Lectures</div>
+                    <div class="text-[11px] text-white/80 font-medium">.md, .html & slide photos</div>
+                  </div>
+                </div>
+
+                <div onclick="toggleStarterSpace(this)" data-selected="true"
+                  class="bento-card bento-notch rounded-[26px] bg-[#FF6B57] p-4 text-white h-[148px] flex flex-col justify-between cursor-pointer relative overflow-hidden">
+                  <div class="flex items-center justify-between">
+                    <div class="w-10 h-10 rounded-[14px] bg-white/20 flex items-center justify-center">
+                      <i data-lucide="images" class="w-5 h-5"></i>
+                    </div>
+                    <span
+                      class="space-check w-6 h-6 rounded-full bg-white text-[#FF6B57] flex items-center justify-center text-xs font-extrabold">✓</span>
+                  </div>
+                  <div>
+                    <div class="font-extrabold text-[17px]">Media & Scans</div>
+                    <div class="text-[11px] text-white/80 font-medium">Images, diagrams & PDFs</div>
+                  </div>
+                </div>
+
+                <div onclick="toggleStarterSpace(this)" data-selected="true"
+                  class="bento-card bento-notch rounded-[26px] bg-[#FDBE58] p-4 text-[#141416] h-[148px] flex flex-col justify-between cursor-pointer relative overflow-hidden">
+                  <div class="flex items-center justify-between">
+                    <div class="w-10 h-10 rounded-[14px] bg-black/10 flex items-center justify-center">
+                      <i data-lucide="code-2" class="w-5 h-5"></i>
+                    </div>
+                    <span
+                      class="space-check w-6 h-6 rounded-full bg-[#141416] text-white flex items-center justify-center text-xs font-extrabold">✓</span>
+                  </div>
+                  <div>
+                    <div class="font-extrabold text-[17px]">HTML Zines</div>
+                    <div class="text-[11px] text-[#141416]/75 font-semibold">Custom HTML/CSS pages</div>
+                  </div>
+                </div>
+
+                <div onclick="toggleStarterSpace(this)" data-selected="true"
+                  class="bento-card bento-notch rounded-[26px] bg-[#3CC162] p-4 text-white h-[148px] flex flex-col justify-between cursor-pointer relative overflow-hidden">
+                  <div class="flex items-center justify-between">
+                    <div class="w-10 h-10 rounded-[14px] bg-white/20 flex items-center justify-center">
+                      <i data-lucide="flame" class="w-5 h-5"></i>
+                    </div>
+                    <span
+                      class="space-check w-6 h-6 rounded-full bg-white text-[#3CC162] flex items-center justify-center text-xs font-extrabold">✓</span>
+                  </div>
+                  <div>
+                    <div class="font-extrabold text-[17px]">Fitness Log</div>
+                    <div class="text-[11px] text-white/85 font-medium">Steps & workout quota</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex gap-2.5">
+              <button onclick="goToWalkthroughStep(1)"
+                class="px-5 py-4 rounded-full bg-[var(--bg-subtle)] font-bold text-xs">
+                Back
+              </button>
+              <button onclick="goToWalkthroughStep(3)"
+                class="flex-1 py-4 rounded-full bg-[#6246EA] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg">
+                <span>Try the Magic Link</span>
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- WALKTHROUGH STEP 3: INTERACTIVE LINK GRAPH DEMO -->
+          <div id="wt-step-3" class="hidden flex-1 flex flex-col justify-between mt-4">
+            <div>
+              <p class="text-xs font-semibold text-[#6246EA]">Step 3 of 3 · The Superpower</p>
+              <h2 class="text-[23px] font-extrabold leading-tight mt-0.5">
+                Link any Note, HTML Doc or Image to an Alarm
+              </h2>
+              <p class="text-xs text-[var(--ink-secondary)] mt-1">
+                Tap below to link your morning Physics HTML/MD study pack & whiteboard photo to your 08:30 AM alarm.
+              </p>
+
+              <!-- Demo Card 1: Note Card -->
+              <div class="mt-4 rounded-[24px] bg-[#FDBE58] p-4 text-[#141416] shadow-sm">
+                <div class="flex items-center justify-between">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/50">🌐 HTML + 📝 MD ·
+                    Lectures</span>
+                  <span class="text-[11px] font-bold">+ 2 Images</span>
+                </div>
+                <div class="font-extrabold text-base mt-2">Physics: Wave Mechanics</div>
+                <div class="text-xs text-[#141416]/80 mt-0.5">Includes interactive HTML formula card & whiteboard photo.
+                </div>
+              </div>
+
+              <!-- Interactive Link Connector Button -->
+              <div class="flex flex-col items-center my-2">
+                <div class="w-0.5 h-3 bg-[#6246EA]/30"></div>
+                <button id="btn-demo-link" onclick="triggerWalkthroughLink()"
+                  class="pulse-cta px-5 py-2.5 rounded-full bg-[#6246EA] text-white text-xs font-extrabold flex items-center gap-2 shadow-md">
+                  <i data-lucide="link-2" class="w-4 h-4"></i>
+                  <span id="demo-link-label">Tap to Link to 08:30 Alarm</span>
+                </button>
+                <div class="w-0.5 h-3 bg-[#6246EA]/30"></div>
+              </div>
+
+              <!-- Demo Card 2: Overflow-Free Alarm Card -->
+              <div id="demo-alarm-card"
+                class="rounded-[24px] bg-[var(--bg-surface)] p-4 shadow-sm border-2 border-transparent transition-all">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-12 h-12 rounded-[16px] bg-[#EAE6FD] text-[#6246EA] flex items-center justify-center shrink-0">
+                    <i data-lucide="alarm-clock" class="w-6 h-6"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-lg font-extrabold leading-none">08:30 AM</div>
+                    <div class="text-xs text-[var(--ink-secondary)] font-semibold mt-1 truncate">Prep for Physics
+                      Lecture</div>
+                    <div id="demo-linked-badge"
+                      class="hidden mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EAE6FD] text-[#6246EA] text-[11px] font-bold max-w-full">
+                      <i data-lucide="link" class="w-3 h-3 shrink-0"></i>
+                      <span class="truncate">Physics: Wave Mechanics</span>
+                    </div>
+                  </div>
+                  <div class="w-11 h-6 rounded-full bg-[#6246EA] p-0.5 flex justify-end shrink-0">
+                    <div class="w-5 h-5 rounded-full bg-white"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="demo-success-msg"
+                class="hidden mt-3 p-3 rounded-[16px] bg-[#E3F9E9] text-[#1A7F37] text-xs font-bold text-center">
+                🎉 Connected! When your 08:30 alarm rings, your note & image folder open in one tap.
+              </div>
+            </div>
+
+            <button onclick="setAppMode('app')"
+              class="w-full py-4 rounded-full bg-[#141416] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg hover:bg-[#6246EA] transition-all">
+              <span>Enter My Workspace</span>
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- MODE B: REDESIGNED MAIN APP (5 TABS + FLOATING DOCK)      -->
+        <!-- ========================================================= -->
+        <div id="main-app-container" class="flex-1 flex flex-col overflow-hidden relative">
+
+          <!-- Personal Greeting Header (Shared across main tabs, matching Target 1 & 2) -->
+          <div class="px-5 pt-1 pb-3 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3">
+              <!-- Avatar / Settings Trigger -->
+              <button onclick="switchTab('settings')"
+                class="w-11 h-11 rounded-full bg-[#FDBE58] border-2 border-white shadow-sm flex items-center justify-center font-extrabold text-[#141416] text-sm relative"
+                title="Open Settings & Privacy">
+                <span id="avatar-initials">AL</span>
+                <span
+                  class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#3CC162] border-2 border-[var(--bg-canvas)]"></span>
+              </button>
+              <div>
+                <div class="text-[12px] font-semibold text-[var(--ink-secondary)] leading-tight" id="header-sub">
+                  Good morning · Fri, 23 Oct
+                </div>
+                <h1 class="text-[22px] font-extrabold tracking-tight leading-tight" id="header-title">
+                  Anna Lane!
+                </h1>
+              </div>
+            </div>
+
+            <!-- Top Right Circular Actions -->
+            <div class="flex items-center gap-2">
+              <button onclick="toggleSearchModal()"
+                class="w-10 h-10 rounded-full bg-[var(--bg-surface)] shadow-sm flex items-center justify-center text-[var(--ink-primary)] hover:scale-105 transition-transform"
+                title="Instant Search">
+                <i data-lucide="search" class="w-4 h-4"></i>
+              </button>
+              <button onclick="switchTab('files')"
+                class="w-10 h-10 rounded-full bg-[#EAE6FD] text-[#6246EA] shadow-sm flex items-center justify-center hover:scale-105 transition-transform relative"
+                title="Open Folders, Images & HTML Docs">
+                <i data-lucide="folder-open" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- SCROLLABLE TAB CONTENT AREA -->
+          <div class="flex-1 overflow-y-auto phone-scroll px-5 pb-28">
+
+            <!-- ========================================================== -->
+            <!-- TAB 1: NOTES, FOLDERS & HTML DOCS BENTO HUB                -->
+            <!-- ========================================================== -->
+            <div id="tab-notes" class="space-y-5">
+
+              <!-- Clean Borderless Pill Filter Rail (Target Image 2 style) -->
+              <div class="flex items-center gap-2 overflow-x-auto phone-scroll py-0.5">
+                <button onclick="filterNotes('all', this)"
+                  class="note-pill px-4 py-2 rounded-full text-xs font-bold bg-[#6246EA] text-white shadow-sm shrink-0 transition-all">
+                  All Spaces
+                </button>
+                <button onclick="switchTab('files')"
+                  class="note-pill px-3.5 py-2 rounded-full text-xs font-bold bg-[#FFE6E2] text-[#FF6B57] shrink-0 transition-all flex items-center gap-1">
+                  📁 Folders & Media
+                </button>
+                <button onclick="filterNotes('html', this)"
+                  class="note-pill px-3.5 py-2 rounded-full text-xs font-bold bg-[#FFF4DC] text-[#B86B00] shrink-0 transition-all flex items-center gap-1">
+                  🌐 HTML Docs
+                </button>
+                <button onclick="filterNotes('lectures', this)"
+                  class="note-pill px-4 py-2 rounded-full text-xs font-bold bg-[var(--bg-subtle)] text-[var(--ink-secondary)] shrink-0 transition-all">
+                  Lectures
+                </button>
+              </div>
+
+              <!-- HERO BANNER: Daily Note & Today's Focus -->
+              <div
+                onclick="openNotePreview('Daily Note · Friday 23 Oct', 'Lectures, 8,000 steps goal, Wave Mechanics HTML card, and 3 whiteboard photos.', '#B19CFF')"
+                class="bento-card rounded-[28px] bg-[#B19CFF] p-5 text-[#141416] relative overflow-hidden cursor-pointer shadow-sm">
+                <div class="relative z-10 max-w-[205px]">
+                  <span
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white/45 backdrop-blur-sm">
+                    ✨ Daily Workspace · Oct 23
+                  </span>
+                  <h2 class="text-[20px] font-extrabold leading-[1.15] mt-2">
+                    Morning Focus & Media
+                  </h2>
+                  <p class="text-[11px] font-semibold text-[#141416]/75 mt-1">
+                    2 MD notes · 1 HTML doc · 4 images
+                  </p>
+                  <div class="flex items-center gap-1.5 mt-3.5">
+                    <span class="px-2.5 py-1 rounded-full bg-[#141416] text-white text-[10px] font-bold">
+                      🔗 08:30 Physics
+                    </span>
+                    <span onclick="event.stopPropagation(); switchTab('files');"
+                      class="px-2.5 py-1 rounded-full bg-white/65 text-[#141416] text-[10px] font-extrabold hover:bg-white">
+                      📁 +Add Media
+                    </span>
+                  </div>
+                </div>
+                <div
+                  class="absolute -right-3 -bottom-3 w-28 h-28 rounded-[24px] bg-[#FDBE58] rotate-12 flex flex-col items-center justify-center shadow-md border-4 border-white/30">
+                  <span
+                    class="text-[10px] font-extrabold uppercase tracking-wider text-[#141416]/70 -rotate-12">Quota</span>
+                  <span class="text-xl font-extrabold text-[#141416] -rotate-12">78%</span>
+                </div>
+              </div>
+
+              <!-- NEW SECTION: FOLDERS FOR IMAGES, FILES & HTML DOCS (Target Image 2 Notched Bento Cards!) -->
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-[17px] font-extrabold tracking-tight">Folders & File Spaces</h3>
+                  <button onclick="switchTab('files')"
+                    class="text-xs font-extrabold text-[#6246EA] hover:underline flex items-center gap-1">
+                    <span>Open File Manager</span>
+                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+
+                <!-- 2-Column Tactile Folder Grid (Directly supports standalone Images, PDFs, HTML & MD) -->
+                <div class="grid grid-cols-2 gap-3.5">
+                  <!-- Folder 1: Lecture Slides & Whiteboard Images (Coral Sunset with Notch) -->
+                  <div onclick="openFolderExplorer('Lecture Photos & Diagrams', 'images')"
+                    class="bento-card bento-notch rounded-[26px] bg-[#FF6B57] p-4 text-white flex flex-col justify-between h-[138px] cursor-pointer shadow-sm">
+                    <div class="flex items-center justify-between">
+                      <div
+                        class="w-10 h-10 rounded-[14px] bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                        <i data-lucide="images" class="w-5 h-5"></i>
+                      </div>
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-black/20">
+                        8 Images
+                      </span>
+                    </div>
+                    <div>
+                      <h4 class="font-extrabold text-[15px] leading-tight">Whiteboard & Photos</h4>
+                      <p class="text-[10px] text-white/85 font-semibold mt-0.5">Standalone PNG, JPG & scans</p>
+                    </div>
+                  </div>
+
+                  <!-- Folder 2: Interactive HTML Magazine Docs (Royal Iris with Notch) -->
+                  <div onclick="openFolderExplorer('HTML Magazine Documents', 'html')"
+                    class="bento-card bento-notch rounded-[26px] bg-[#6246EA] p-4 text-white flex flex-col justify-between h-[138px] cursor-pointer shadow-sm">
+                    <div class="flex items-center justify-between">
+                      <div
+                        class="w-10 h-10 rounded-[14px] bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                        <i data-lucide="code-2" class="w-5 h-5"></i>
+                      </div>
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white/25">
+                        3 .HTML
+                      </span>
+                    </div>
+                    <div>
+                      <h4 class="font-extrabold text-[15px] leading-tight">HTML Documents</h4>
+                      <p class="text-[10px] text-white/85 font-semibold mt-0.5">Custom CSS zines & dashboards</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SECTION: PINNED BENTO GRID (MD + HTML Documents Side-by-Side) -->
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-[17px] font-extrabold tracking-tight">Pinned Documents</h3>
+                  <span class="text-xs font-bold text-[var(--ink-secondary)]">.MD & .HTML</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3.5">
+                  <!-- Left Tall Bento Card: Interactive HTML Document! -->
+                  <div data-category="html" onclick="openHtmlDocViewer('Quantum Wave Zine.html')"
+                    class="note-item bento-card rounded-[28px] bg-[#FDBE58] p-4 text-[#141416] flex flex-col justify-between min-h-[218px] cursor-pointer shadow-sm">
+                    <div>
+                      <div class="flex items-center justify-between">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#141416] text-white">
+                          🌐 HTML Doc
+                        </span>
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                      </div>
+                      <h4 class="font-extrabold text-[18px] leading-snug mt-3">
+                        Quantum Wave Interactive Sheet
+                      </h4>
+                      <p class="text-[11px] font-semibold text-[#141416]/80 mt-1.5 line-clamp-3">
+                        Magazine-style HTML/CSS visual layout with custom cards, dark grid & offline formulas.
+                      </p>
+                    </div>
+
+                    <div
+                      class="pt-3 border-t border-black/10 flex items-center justify-between text-[10px] font-extrabold">
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/10">
+                        🎨 Custom CSS
+                      </span>
+                      <span>Tap to Render</span>
+                    </div>
+                  </div>
+
+                  <!-- Right Column: 2 Stacked Bento Cards (Markdown Note + Standalone Image Card) -->
+                  <div class="flex flex-col gap-3.5">
+                    <!-- Top Right Card: Periwinkle Sky (.MD Note) -->
+                    <div data-category="lectures"
+                      onclick="openNotePreview('Physics Lecture Notes.md', 'Standard Markdown note linked to Quantum Wave Zine.html and 08:30 AM Alarm.', '#B4D2FF')"
+                      class="note-item bento-card rounded-[26px] bg-[#B4D2FF] p-4 text-[#141416] flex-1 flex flex-col justify-between cursor-pointer shadow-sm">
+                      <div>
+                        <div class="flex items-center justify-between">
+                          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white/60">
+                            📝 .MD Note
+                          </span>
+                          <span class="text-[10px] font-bold opacity-70">31m ago</span>
+                        </div>
+                        <h4 class="font-extrabold text-[15px] leading-tight mt-2">
+                          Physics Lecture Notes
+                        </h4>
+                      </div>
+                      <div class="flex items-center gap-1 text-[10px] font-extrabold text-[#141416]/80 mt-2">
+                        <span>🔗 2 links</span>
+                        <span>·</span>
+                        <span>#physics</span>
+                      </div>
+                    </div>
+
+                    <!-- Bottom Right Card: Standalone Image Gallery Shortcut -->
+                    <div data-category="lectures"
+                      onclick="openImageLightbox('Lab_Distillation_Setup.jpg', 'Lectures / Lab Photos Folder · 2.4 MB JPG')"
+                      class="note-item bento-card rounded-[24px] bg-[#FF9CE9] p-3.5 text-[#141416] flex flex-col justify-between cursor-pointer shadow-sm">
+                      <div class="flex items-center justify-between">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-white/60">
+                          🖼️ Image File
+                        </span>
+                        <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                      </div>
+                      <div class="font-extrabold text-[13px] mt-1.5 leading-tight">
+                        Lab_Distillation_Setup.jpg
+                      </div>
+                      <div class="text-[10px] font-bold text-[#141416]/70 mt-0.5">
+                        In folder: /Lab Photos
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SECTION: ALL RECENT ITEMS (.MD, .HTML, IMAGES & PDFS) -->
+              <div>
+                <div class="flex items-center justify-between mb-2.5">
+                  <h3 class="text-[16px] font-extrabold tracking-tight">Recent Files & Documents</h3>
+                  <button onclick="triggerRealFileUpload()"
+                    class="text-[11px] font-extrabold text-[#6246EA] hover:underline">
+                    + Upload File/Image
+                  </button>
+                </div>
+
+                <div id="recent-files-list" class="space-y-2.5">
+                  <!-- Item 1: HTML Document -->
+                  <div data-category="html" onclick="openHtmlDocViewer('Periodic Table Reference.html')"
+                    class="note-item bento-card rounded-[22px] bg-[var(--bg-surface)] p-3.5 flex items-center gap-3.5 shadow-sm cursor-pointer">
+                    <div
+                      class="w-12 h-12 rounded-[16px] bg-[#FFF4DC] text-[#D98200] flex flex-col items-center justify-center font-extrabold leading-none shrink-0">
+                      <i data-lucide="globe" class="w-5 h-5"></i>
+                      <span class="text-[8px] uppercase mt-1">HTML</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <h4 class="font-extrabold text-sm truncate">Periodic Table Reference.html</h4>
+                      <p class="text-xs text-[var(--ink-secondary)] truncate mt-0.5">
+                        Sandboxed HTML/CSS grid · Offline ready
+                      </p>
+                    </div>
+                    <span
+                      class="px-2.5 py-1 rounded-full bg-[#FFF4DC] text-[#B86B00] text-[10px] font-extrabold shrink-0">
+                      .html
+                    </span>
+                  </div>
+
+                  <!-- Item 2: Standalone Image File -->
+                  <div data-category="lectures"
+                    onclick="openImageLightbox('Whiteboard_Schrodinger_Eq.png', 'Saved directly in /Lectures/Images · Not embedded in MD')"
+                    class="note-item bento-card rounded-[22px] bg-[var(--bg-surface)] p-3.5 flex items-center gap-3.5 shadow-sm cursor-pointer">
+                    <div
+                      class="w-12 h-12 rounded-[16px] bg-[#FFE6E2] text-[#FF6B57] flex flex-col items-center justify-center font-extrabold leading-none shrink-0">
+                      <i data-lucide="image" class="w-5 h-5"></i>
+                      <span class="text-[8px] uppercase mt-1">PNG</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <h4 class="font-extrabold text-sm truncate">Whiteboard_Schrodinger_Eq.png</h4>
+                      <p class="text-xs text-[var(--ink-secondary)] truncate mt-0.5">
+                        Folder: /Lectures/Images · 1.8 MB
+                      </p>
+                    </div>
+                    <span
+                      class="px-2.5 py-1 rounded-full bg-[#FFE6E2] text-[#FF6B57] text-[10px] font-extrabold shrink-0">
+                      Image
+                    </span>
+                  </div>
+
+                  <!-- Item 3: PDF Handout File -->
+                  <div data-category="lectures"
+                    onclick="openNotePreview('Syllabus_Autumn_2026.pdf', 'Standalone PDF stored in your /Lectures/Handouts folder. Linked to Wednesday Timetable.', '#B4D2FF')"
+                    class="note-item bento-card rounded-[22px] bg-[var(--bg-surface)] p-3.5 flex items-center gap-3.5 shadow-sm cursor-pointer">
+                    <div
+                      class="w-12 h-12 rounded-[16px] bg-[#EAE6FD] text-[#6246EA] flex flex-col items-center justify-center font-extrabold leading-none shrink-0">
+                      <i data-lucide="file-text" class="w-5 h-5"></i>
+                      <span class="text-[8px] uppercase mt-1">PDF</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <h4 class="font-extrabold text-sm truncate">Syllabus_Autumn_2026.pdf</h4>
+                      <p class="text-xs text-[var(--ink-secondary)] truncate mt-0.5">
+                        Folder: /Lectures/Handouts · 420 KB
+                      </p>
+                    </div>
+                    <span
+                      class="px-2.5 py-1 rounded-full bg-[#EAE6FD] text-[#6246EA] text-[10px] font-extrabold shrink-0">
+                      .pdf
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- TAB 1.5: DEDICATED FOLDERS, IMAGES, FILES & HTML SYSTEM    -->
+            <!-- ========================================================== -->
+            <div id="tab-files" class="hidden space-y-5">
+
+              <!-- Top Breadcrumb & Action Bar -->
+              <div class="flex items-center justify-between">
+                <button onclick="switchTab('notes')"
+                  class="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#6246EA] bg-[#EAE6FD] px-3 py-1.5 rounded-full">
+                  <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                  <span>Back to Hub</span>
+                </button>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="createNewFolderPrompt()"
+                    class="px-3 py-1.5 rounded-full bg-[var(--bg-surface)] text-xs font-extrabold shadow-sm flex items-center gap-1">
+                    <i data-lucide="folder-plus" class="w-3.5 h-3.5 text-[#6246EA]"></i>
+                    <span>New Folder</span>
+                  </button>
+                  <button onclick="triggerRealFileUpload()"
+                    class="px-3 py-1.5 rounded-full bg-[#6246EA] text-white text-xs font-extrabold shadow-sm flex items-center gap-1">
+                    <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                    <span>Add File</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Storage Overview Banner -->
+              <div class="rounded-[26px] bg-[#141416] text-white p-4 flex items-center justify-between shadow-sm">
+                <div>
+                  <span class="text-[10px] font-extrabold uppercase tracking-wider text-[#FDBE58]">On-Device File
+                    System</span>
+                  <h3 class="text-base font-extrabold mt-0.5">Folders, Images, Files & HTML</h3>
+                  <p class="text-[11px] text-white/70 mt-0.5">Store any image, PDF, or <span class="mono">.html</span>
+                    doc without needing a Markdown file.</p>
+                </div>
+                <div class="w-12 h-12 rounded-[16px] bg-white/10 flex items-center justify-center shrink-0">
+                  <i data-lucide="hard-drive" class="w-6 h-6 text-[#FDBE58]"></i>
+                </div>
+              </div>
+
+              <!-- FOLDERS GRID (Interactive: Click to filter folder contents, or add new folders) -->
+              <div>
+                <div class="flex items-center justify-between mb-2.5">
+                  <h4 class="text-sm font-extrabold">Your Folders</h4>
+                  <span id="folder-count-badge" class="text-[11px] font-bold text-[var(--ink-secondary)]">4
+                    Folders</span>
+                </div>
+
+                <div id="folders-grid" class="grid grid-cols-2 gap-3">
+                  <!-- Folder A: Images & Scans -->
+                  <div onclick="filterFolderItems('images')"
+                    class="bento-card rounded-[24px] bg-[#FF6B57] p-4 text-white cursor-pointer shadow-sm">
+                    <div class="flex items-center justify-between">
+                      <i data-lucide="images" class="w-6 h-6"></i>
+                      <span class="text-[10px] font-extrabold bg-black/20 px-2 py-0.5 rounded-full">Images</span>
+                    </div>
+                    <div class="font-extrabold text-sm mt-3">📸 Lecture Photos</div>
+                    <div class="text-[11px] text-white/80 font-medium">Whiteboards & diagrams</div>
+                  </div>
+
+                  <!-- Folder B: HTML Magazine Docs -->
+                  <div onclick="filterFolderItems('html')"
+                    class="bento-card rounded-[24px] bg-[#6246EA] p-4 text-white cursor-pointer shadow-sm">
+                    <div class="flex items-center justify-between">
+                      <i data-lucide="code-2" class="w-6 h-6"></i>
+                      <span class="text-[10px] font-extrabold bg-white/20 px-2 py-0.5 rounded-full">.HTML</span>
+                    </div>
+                    <div class="font-extrabold text-sm mt-3">🌐 HTML Zines</div>
+                    <div class="text-[11px] text-white/80 font-medium">Rich CSS pages & tables</div>
+                  </div>
+
+                  <!-- Folder C: PDFs & Handouts -->
+                  <div onclick="filterFolderItems('files')"
+                    class="bento-card rounded-[24px] bg-[#B4D2FF] p-4 text-[#141416] cursor-pointer shadow-sm">
+                    <div class="flex items-center justify-between">
+                      <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
+                      <span class="text-[10px] font-extrabold bg-white/60 px-2 py-0.5 rounded-full">PDF / ZIP</span>
+                    </div>
+                    <div class="font-extrabold text-sm mt-3">📄 Handouts & PDFs</div>
+                    <div class="text-[11px] text-[#141416]/75 font-semibold">Syllabi & lab manuals</div>
+                  </div>
+
+                  <!-- Folder D: Markdown Notes -->
+                  <div onclick="filterFolderItems('all')"
+                    class="bento-card rounded-[24px] bg-[#FDBE58] p-4 text-[#141416] cursor-pointer shadow-sm">
+                    <div class="flex items-center justify-between">
+                      <i data-lucide="folder-kanban" class="w-6 h-6"></i>
+                      <span class="text-[10px] font-extrabold bg-white/60 px-2 py-0.5 rounded-full">All</span>
+                    </div>
+                    <div class="font-extrabold text-sm mt-3">🗂️ All Workspace Files</div>
+                    <div class="text-[11px] text-[#141416]/75 font-semibold">View every file & image</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- STANDALONE IMAGE GALLERY (Visual Grid inside Folder) -->
+              <div id="folder-images-section">
+                <div class="flex items-center justify-between mb-2.5">
+                  <h4 class="text-sm font-extrabold">Standalone Images in Folder</h4>
+                  <button onclick="triggerRealFileUpload()" class="text-xs font-extrabold text-[#FF6B57]">+ Add
+                    Photo</button>
+                </div>
+
+                <div id="image-gallery-grid" class="grid grid-cols-3 gap-2.5">
+                  <!-- Image Thumbnail 1 -->
+                  <div
+                    onclick="openImageLightbox('Quantum_Potential_Well.png', 'Lectures / Lecture Photos · 1420×980 PNG · Linked to 08:30 Alarm')"
+                    class="bento-card rounded-[18px] bg-[#1E222D] h-24 p-2.5 flex flex-col justify-between text-white cursor-pointer relative overflow-hidden shadow-sm">
+                    <div class="absolute inset-0 bg-gradient-to-br from-[#6246EA]/60 to-[#FF6B57]/60"></div>
+                    <span
+                      class="relative z-10 text-[9px] font-extrabold bg-black/40 px-1.5 py-0.5 rounded w-fit">PNG</span>
+                    <div class="relative z-10">
+                      <div class="text-[10px] font-extrabold leading-tight truncate">Quantum_Well</div>
+                      <div class="text-[8px] text-white/80">1.2 MB</div>
+                    </div>
+                  </div>
+
+                  <!-- Image Thumbnail 2 -->
+                  <div
+                    onclick="openImageLightbox('Organic_Chem_Distillation.jpg', 'Lectures / Lab Photos · 2.4 MB JPG')"
+                    class="bento-card rounded-[18px] bg-[#1E222D] h-24 p-2.5 flex flex-col justify-between text-white cursor-pointer relative overflow-hidden shadow-sm">
+                    <div class="absolute inset-0 bg-gradient-to-tr from-[#FDBE58]/70 to-[#FF6B57]/70"></div>
+                    <span
+                      class="relative z-10 text-[9px] font-extrabold bg-black/40 px-1.5 py-0.5 rounded w-fit">JPG</span>
+                    <div class="relative z-10">
+                      <div class="text-[10px] font-extrabold leading-tight truncate">Distillation_Lab</div>
+                      <div class="text-[8px] text-white/80">2.4 MB</div>
+                    </div>
+                  </div>
+
+                  <!-- Add New Image Tile -->
+                  <button onclick="triggerRealFileUpload()"
+                    class="bento-card rounded-[18px] bg-[var(--bg-subtle)] border-2 border-dashed border-[#6246EA]/40 h-24 flex flex-col items-center justify-center gap-1 text-[#6246EA] hover:bg-[#EAE6FD] transition-all">
+                    <i data-lucide="image-plus" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-extrabold">Add Image</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- HTML DOCUMENT SYSTEM SECTION -->
+              <div id="folder-html-section">
+                <div class="flex items-center justify-between mb-2.5">
+                  <div>
+                    <h4 class="text-sm font-extrabold">HTML Document System (.html)</h4>
+                    <p class="text-[10px] text-[var(--ink-secondary)]">Sandboxed WebView · Custom CSS · Offline Magazine
+                      Pages</p>
+                  </div>
+                  <button onclick="openHtmlCreatorModal()"
+                    class="px-2.5 py-1 rounded-full bg-[#EAE6FD] text-[#6246EA] text-[11px] font-extrabold">
+                    + New .HTML
+                  </button>
+                </div>
+
+                <div id="html-docs-list" class="space-y-2.5">
+                  <!-- HTML Doc 1 -->
+                  <div onclick="openHtmlDocViewer('Quantum Wave Interactive Sheet.html')"
+                    class="bento-card rounded-[22px] bg-[var(--bg-surface)] p-3.5 flex items-center justify-between shadow-sm cursor-pointer border-l-4 border-[#6246EA]">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <div
+                        class="w-10 h-10 rounded-[14px] bg-[#EAE6FD] text-[#6246EA] flex items-center justify-center shrink-0">
+                        <i data-lucide="layout-template" class="w-5 h-5"></i>
+                      </div>
+                      <div class="min-w-0">
+                        <div class="text-xs font-extrabold truncate">Quantum Wave Interactive Sheet.html</div>
+                        <div class="text-[10px] text-[var(--ink-secondary)]">CSS Grid + Formula Cards · Sandboxed</div>
+                      </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full bg-[#6246EA] text-white text-[10px] font-extrabold shrink-0">
+                      Render
+                    </span>
+                  </div>
+
+                  <!-- HTML Doc 2 -->
+                  <div onclick="openHtmlDocViewer('Semester Timetable Poster.html')"
+                    class="bento-card rounded-[22px] bg-[var(--bg-surface)] p-3.5 flex items-center justify-between shadow-sm cursor-pointer border-l-4 border-[#FDBE58]">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <div
+                        class="w-10 h-10 rounded-[14px] bg-[#FFF4DC] text-[#D98200] flex items-center justify-center shrink-0">
+                        <i data-lucide="file-code" class="w-5 h-5"></i>
+                      </div>
+                      <div class="min-w-0">
+                        <div class="text-xs font-extrabold truncate">Semester Timetable Poster.html</div>
+                        <div class="text-[10px] text-[var(--ink-secondary)]">Custom Magazine Typography · Offline</div>
+                      </div>
+                    </div>
+                    <span
+                      class="px-2.5 py-1 rounded-full bg-[#FFF4DC] text-[#B86B00] text-[10px] font-extrabold shrink-0">
+                      Render
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- ========================================== -->
+            <!-- TAB 2: TIME & SCHEDULE (ZERO OVERFLOW!)    -->
+            <!-- ========================================== -->
+            <div id="tab-time" class="hidden space-y-5">
+
+              <!-- VERTICAL CAPSULE DATE STRIP (Exact Target Image 1 style: Sun 22 - Sat 28) -->
+              <div class="grid grid-cols-7 gap-1.5 pt-1">
+                <button onclick="selectDay(this)"
+                  class="day-pill h-[72px] rounded-full bg-[var(--bg-surface)] border border-black/5 flex flex-col items-center justify-center gap-1 transition-all">
+                  <span class="w-1 h-1 rounded-full bg-transparent"></span>
+                  <span class="text-[10px] font-semibold text-[var(--ink-secondary)]">Sun</span>
+                  <span class="text-xs font-extrabold">22</span>
+                </button>
+                <button onclick="selectDay(this)"
+                  class="day-pill h-[72px] rounded-full bg-[var(--bg-surface)] border border-black/5 flex flex-col items-center justify-center gap-1 transition-all">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#6246EA]"></span>
+                  <span class="text-[10px] font-semibold text-[var(--ink-secondary)]">Mon</span>
+                  <span class="text-xs font-extrabold">23</span>
+                </button>
+                <button onclick="selectDay(this)"
+                  class="day-pill h-[72px] rounded-full bg-[var(--bg-surface)] border border-black/5 flex flex-col items-center justify-center gap-1 transition-all">
+                  <span class="w-1 h-1 rounded-full bg-transparent"></span>
+                  <span class="text-[10px] font-semibold text-[var(--ink-secondary)]">Tue</span>
+                  <span class="text-xs font-extrabold">24</span>
+                </button>
+                <!-- Active Day Pill: Solid Dark Obsidian Capsule -->
+                <button onclick="selectDay(this)"
+                  class="day-pill h-[72px] rounded-full bg-[#141416] text-white shadow-md flex flex-col items-center justify-center gap-1 transition-all">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#FDBE58]"></span>
+                  <span class="text-[10px] font-medium text-white/80">Wed</span>
+                  <span class="text-xs font-extrabold">25</span>
+                </button>
+                <button onclick="selectDay(this)"
+                  class="day-pill h-[72px] rounded-full bg-[var(--bg-surface)] border border-black/5 flex flex-col items-center justify-center gap-1 transition-all">
+                  <span class="w-1 h-1 rounded-full bg-transparent"></span>
+                  <span class="text-[10px] font-semibold text-[var(--ink-secondary)]">Thu</span>
+                  <span class="text-xs font-extrabold">26</span>
+                </button>
+                <button onclick="selectDay(this)"
+                  class="day-pill h-[72px] rounded-full bg-[var(--bg-surface)] border border-black/5 flex flex-col items-center justify-center gap-1 transition-all">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#FF6B57]"></span>
+                  <span class="text-[10px] font-semibold text-[var(--ink-secondary)]">Fri</span>
+                  <span class="text-xs font-extrabold">27</span>
+                </button>
+                <button onclick="selectDay(this)"
+                  class="day-pill h-[72px] rounded-full bg-[var(--bg-surface)] border border-black/5 flex flex-col items-center justify-center gap-1 transition-all">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#3CC162]"></span>
+                  <span class="text-[10px] font-semibold text-[var(--ink-secondary)]">Sat</span>
+                  <span class="text-xs font-extrabold">28</span>
+                </button>
+              </div>
+
+              <!-- Segmented Pill Switcher -->
+              <div class="bg-[var(--bg-subtle)] p-1 rounded-full grid grid-cols-2 gap-1">
+                <button id="subtab-alarms" onclick="switchTimeView('alarms')"
+                  class="py-2 rounded-full text-xs font-extrabold bg-[#6246EA] text-white shadow-sm transition-all">
+                  ⏰ Alarms & Reminders
+                </button>
+                <button id="subtab-timetable" onclick="switchTimeView('timetable')"
+                  class="py-2 rounded-full text-xs font-extrabold text-[var(--ink-secondary)] transition-all">
+                  🗓️ Class Timetable
+                </button>
+              </div>
+
+              <!-- VIEW A: OVERFLOW-FREE ALARMS & REMINDERS -->
+              <div id="time-alarms-view" class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-extrabold text-[var(--ink-secondary)] uppercase tracking-wider">Active
+                    Alarms · Zero Overflow</span>
+                  <span class="text-[11px] font-bold text-[#6246EA]">Exact Alarm Ready ✓</span>
+                </div>
+
+                <!-- Alarm 1: 06:30 -->
+                <div class="rounded-[24px] bg-[var(--bg-surface)] p-4 shadow-sm flex items-center gap-3.5">
+                  <div
+                    class="w-12 h-12 rounded-[16px] bg-[#FFF4DC] text-[#D98200] flex items-center justify-center shrink-0">
+                    <i data-lucide="sunrise" class="w-6 h-6"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-xl font-extrabold tracking-tight leading-none">06:30</div>
+                    <div class="text-xs font-semibold text-[var(--ink-secondary)] mt-1 truncate">
+                      Wake Up & Morning Routine
+                    </div>
+                  </div>
+                  <button onclick="toggleSwitch(this)" data-on="true"
+                    class="w-12 h-7 rounded-full bg-[#6246EA] p-1 flex items-center justify-end transition-all shrink-0">
+                    <div class="w-5 h-5 rounded-full bg-white shadow-sm"></div>
+                  </button>
+                </div>
+
+                <!-- Alarm 2: 08:30 (Links to both HTML Doc & Image Folder!) -->
+                <div class="rounded-[24px] bg-[var(--bg-surface)] p-4 shadow-sm flex items-center gap-3.5">
+                  <div
+                    class="w-12 h-12 rounded-[16px] bg-[#EAE6FD] text-[#6246EA] flex items-center justify-center shrink-0">
+                    <i data-lucide="bell-ring" class="w-5 h-5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-baseline gap-2">
+                      <span class="text-xl font-extrabold tracking-tight leading-none">08:30</span>
+                      <span class="text-[10px] font-bold text-[#6246EA] bg-[#EAE6FD] px-2 py-0.5 rounded-full">In
+                        50m</span>
+                    </div>
+                    <div class="text-xs font-semibold text-[var(--ink-secondary)] mt-1 truncate">
+                      Prep for Physics Lecture
+                    </div>
+                    <button onclick="openHtmlDocViewer('Quantum Wave Interactive Sheet.html')"
+                      class="mt-2 max-w-full inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FFF4DC] text-[#9A5B00] text-[11px] font-extrabold hover:opacity-90">
+                      <i data-lucide="link" class="w-3 h-3 shrink-0"></i>
+                      <span class="truncate">Quantum Wave Sheet.html + 2 imgs</span>
+                    </button>
+                  </div>
+                  <button onclick="toggleSwitch(this)" data-on="true"
+                    class="w-12 h-7 rounded-full bg-[#6246EA] p-1 flex items-center justify-end transition-all shrink-0">
+                    <div class="w-5 h-5 rounded-full bg-white shadow-sm"></div>
+                  </button>
+                </div>
+
+                <!-- Alarm 3: 18:00 -->
+                <div class="rounded-[24px] bg-[var(--bg-surface)] p-4 shadow-sm flex items-center gap-3.5">
+                  <div
+                    class="w-12 h-12 rounded-[16px] bg-[#E3F9E9] text-[#289E48] flex items-center justify-center shrink-0">
+                    <i data-lucide="activity" class="w-5 h-5"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-xl font-extrabold tracking-tight leading-none">18:00</div>
+                    <div class="text-xs font-semibold text-[var(--ink-secondary)] mt-1 truncate">
+                      Daily Exercise Quota Check
+                    </div>
+                    <button
+                      onclick="openNotePreview('Daily Fitness Log & Quota', 'Opened from your 18:00 Quota Reminder.', '#3CC162')"
+                      class="mt-2 max-w-full inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E3F9E9] text-[#1A7F37] text-[11px] font-extrabold hover:opacity-90">
+                      <i data-lucide="link" class="w-3 h-3 shrink-0"></i>
+                      <span class="truncate">Daily Fitness Log & Quota</span>
+                    </button>
+                  </div>
+                  <button onclick="toggleSwitch(this)" data-on="true"
+                    class="w-12 h-7 rounded-full bg-[#6246EA] p-1 flex items-center justify-end transition-all shrink-0">
+                    <div class="w-5 h-5 rounded-full bg-white shadow-sm"></div>
+                  </button>
+                </div>
+              </div>
+
+              <!-- VIEW B: TIMETABLE BENTO CARDS -->
+              <div id="time-timetable-view" class="hidden space-y-3.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-extrabold text-[var(--ink-secondary)]">Wednesday Slots</span>
+                  <span class="text-[11px] font-bold text-[#6246EA]">CSV / ICS Imported</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3.5">
+                  <div onclick="openHtmlDocViewer('Quantum Wave Interactive Sheet.html')"
+                    class="bento-card rounded-[26px] bg-[#FDBE58] p-4 text-[#141416] flex flex-col justify-between min-h-[175px] cursor-pointer">
+                    <div>
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white/50">09:00 -
+                        10:30</span>
+                      <h4 class="font-extrabold text-[17px] mt-2.5 leading-tight">Wave Mechanics</h4>
+                      <p class="text-xs font-semibold text-[#141416]/75 mt-1">Room A5 · Hall 2</p>
+                    </div>
+                    <div
+                      class="text-[10px] font-extrabold flex items-center gap-1 bg-black/10 px-2.5 py-1 rounded-full w-fit">
+                      🔗 1 HTML · 2 Photos
+                    </div>
+                  </div>
+
+                  <div onclick="switchTab('files')"
+                    class="bento-card rounded-[26px] bg-[#B4D2FF] p-4 text-[#141416] flex flex-col justify-between min-h-[175px] cursor-pointer">
+                    <div>
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white/50">14:00 -
+                        15:30</span>
+                      <h4 class="font-extrabold text-[17px] mt-2.5 leading-tight">Systems Design</h4>
+                      <p class="text-xs font-semibold text-[#141416]/75 mt-1">Lab B2 · CS Wing</p>
+                    </div>
+                    <div
+                      class="text-[10px] font-extrabold flex items-center gap-1 bg-black/10 px-2.5 py-1 rounded-full w-fit">
+                      📁 Folder Linked
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- ========================================== -->
+            <!-- TAB 3: HEALTH CONNECT QUOTA BENTO          -->
+            <!-- ========================================== -->
+            <div id="tab-health" class="hidden space-y-4">
+              <div class="rounded-[28px] bg-[#3CC162] p-5 text-white relative overflow-hidden shadow-sm">
+                <span class="px-3 py-1 rounded-full text-[10px] font-extrabold bg-white/20 backdrop-blur-sm">
+                  ⚡ Health Connect · On-Device
+                </span>
+                <h2 class="text-[22px] font-extrabold mt-2.5">Daily Movement Quota</h2>
+                <p class="text-xs text-white/85 font-medium">No Google Fit cloud required. Stored locally.</p>
+
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                  <div class="rounded-[20px] bg-black/15 p-3.5">
+                    <div class="text-[11px] text-white/80 font-bold">Steps Today</div>
+                    <div class="text-2xl font-extrabold mt-0.5">6,420</div>
+                    <div class="text-[10px] font-bold text-white/75 mt-1">Goal: 8,000 (80%)</div>
+                  </div>
+                  <div class="rounded-[20px] bg-black/15 p-3.5">
+                    <div class="text-[11px] text-white/80 font-bold">Active Mins</div>
+                    <div class="text-2xl font-extrabold mt-0.5">38m</div>
+                    <div class="text-[10px] font-bold text-white/75 mt-1">Goal: 45m (84%)</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-[24px] bg-[var(--bg-surface)] p-4 shadow-sm flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-11 h-11 rounded-[15px] bg-[#FFF4DC] text-[#D98200] flex items-center justify-center font-bold">
+                    🔗
+                  </div>
+                  <div>
+                    <div class="text-sm font-extrabold">Linked Workout Note & Progress Photos</div>
+                    <div class="text-xs text-[var(--ink-secondary)]">Daily Fitness Log.md + /Gym Photos folder</div>
+                  </div>
+                </div>
+                <button
+                  onclick="openNotePreview('Daily Fitness Log & Quota', 'Push/Pull routine + 8,000 step streak tracked locally.', '#3CC162')"
+                  class="px-3 py-1.5 rounded-full bg-[#EAE6FD] text-[#6246EA] text-xs font-extrabold">
+                  Open
+                </button>
+              </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- TAB 4: BIOMETRIC VAULT                     -->
+            <!-- ========================================== -->
+            <div id="tab-vault" class="hidden space-y-4">
+              <div class="rounded-[28px] bg-[#141416] text-white p-6 text-center space-y-3 shadow-md">
+                <div
+                  class="w-16 h-16 rounded-[22px] bg-[#6246EA]/25 text-[#B19CFF] flex items-center justify-center mx-auto">
+                  <i data-lucide="fingerprint" class="w-9 h-9"></i>
+                </div>
+                <span class="inline-block px-3 py-0.5 rounded-full bg-white/10 text-[10px] font-bold text-[#B19CFF]">
+                  AES-256-GCM · Hardware Keystore
+                </span>
+                <h3 class="text-xl font-extrabold">Private Vault Locked</h3>
+                <p class="text-xs text-white/70 max-w-[230px] mx-auto">
+                  Encrypts private notes, HTML docs, ID scans, and photos. Screenshots are blocked inside the vault.
+                </p>
+                <button onclick="unlockVaultDemo(this)"
+                  class="w-full py-3.5 rounded-full bg-[#6246EA] text-white text-xs font-extrabold shadow-md hover:bg-[#7359F8] transition-all">
+                  Unlock with Biometrics
+                </button>
+              </div>
+
+              <div id="vault-unlocked-items" class="hidden space-y-2.5">
+                <div class="text-xs font-extrabold text-[#3CC162] px-1">🔓 Vault Unlocked (Auto-locks on background)
+                </div>
+                <div class="rounded-[22px] bg-[var(--bg-surface)] p-4 flex items-center justify-between shadow-sm">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[14px] bg-[#EAE6FD] text-[#6246EA] flex items-center justify-center">
+                      <i data-lucide="key-round" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-extrabold">Recovery Codes & ID Scans</div>
+                      <div class="text-[11px] text-[var(--ink-secondary)]">1 Encrypted Note · 2 Passport JPGs</div>
+                    </div>
+                  </div>
+                  <span
+                    class="px-2.5 py-1 rounded-full bg-[#EAE6FD] text-[#6246EA] text-[10px] font-extrabold">Encrypted</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- TAB 5: HUMANIZED SETTINGS (NO DEV JARGON!) -->
+            <!-- ========================================== -->
+            <div id="tab-settings" class="hidden space-y-4">
+              <div class="rounded-[26px] bg-[#6246EA] p-5 text-white shadow-sm">
+                <div class="flex items-center justify-between">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white/20">
+                    Privacy Guarantee
+                  </span>
+                  <span class="text-xs font-bold">100% Local-First</span>
+                </div>
+                <h3 class="text-lg font-extrabold mt-2">Your files live on this phone</h3>
+                <p class="text-xs text-white/80 mt-0.5">
+                  All your <span class="mono">.md</span> notes, <span class="mono">.html</span> pages, and image folders
+                  sit in plain device folders you own forever.
+                </p>
+              </div>
+
+              <div class="rounded-[24px] bg-[var(--bg-surface)] p-2 shadow-sm divide-y divide-black/5">
+
+                <div class="p-3 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[14px] bg-[#FFF4DC] text-[#D98200] flex items-center justify-center">
+                      <i data-lucide="sun-moon" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-extrabold">Appearance</div>
+                      <div class="text-xs text-[var(--ink-secondary)]">Warm Alabaster / Deep Obsidian</div>
+                    </div>
+                  </div>
+                  <button onclick="toggleDarkMode()"
+                    class="px-3 py-1.5 rounded-full bg-[var(--bg-subtle)] text-xs font-extrabold">
+                    Switch Theme
+                  </button>
+                </div>
+
+                <div onclick="switchTab('files')"
+                  class="p-3 flex items-center justify-between cursor-pointer hover:bg-black/5 rounded-[16px]">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[14px] bg-[#EAE6FD] text-[#6246EA] flex items-center justify-center">
+                      <i data-lucide="folder-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-extrabold">Workspace Folders & Media</div>
+                      <div class="text-xs text-[var(--ink-secondary)]">4 MD · 3 HTML docs · 8 standalone images</div>
+                    </div>
+                  </div>
+                  <span class="text-xs font-extrabold text-[#6246EA]">Browse →</span>
+                </div>
+
+                <div class="p-3 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[14px] bg-[#E3F9E9] text-[#289E48] flex items-center justify-center">
+                      <i data-lucide="download" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-extrabold">Export Full Backup (.ZIP)</div>
+                      <div class="text-xs text-[var(--ink-secondary)]">All folders, HTML, MD & photos</div>
+                    </div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-[var(--ink-secondary)]"></i>
+                </div>
+
+                <div class="p-3 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[14px] bg-[#EBF3FF] text-[#2B6CB0] flex items-center justify-center">
+                      <i data-lucide="cloud" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-extrabold">Encrypted Drive Backup</div>
+                      <div class="text-xs text-[var(--ink-secondary)]">Optional · Private app folder only</div>
+                    </div>
+                  </div>
+                  <button onclick="toggleSwitch(this)" data-on="false"
+                    class="w-12 h-7 rounded-full bg-[#D8D5CE] p-1 flex items-center justify-start transition-all shrink-0">
+                    <div class="w-5 h-5 rounded-full bg-white shadow-sm"></div>
+                  </button>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ========================================================= -->
+          <!-- FLOATING CAPSULE BOTTOM DOCK (Target Image 1 & 2 Style)   -->
+          <!-- ========================================================= -->
+          <div
+            class="absolute bottom-5 left-5 right-5 h-[68px] rounded-full bg-[var(--dock-bg)] px-2.5 flex items-center justify-between shadow-[0_16px_36px_rgba(20,20,22,0.32)] z-20">
+
+            <!-- Nav 1: Home / Notes Hub -->
+            <button id="nav-notes" onclick="switchTab('notes')"
+              class="w-11 h-11 rounded-full bg-white text-[#141416] flex items-center justify-center transition-all shadow-sm"
+              title="Notes & Bento Hub">
+              <i data-lucide="home" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Nav 2: Folders, Images & HTML System -->
+            <button id="nav-files" onclick="switchTab('files')"
+              class="w-11 h-11 rounded-full text-white/70 hover:text-white flex items-center justify-center transition-all"
+              title="Folders, Images & HTML Docs">
+              <i data-lucide="folder-open" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Center Quick Capture Button (Creates MD, HTML Doc, or Uploads Image/File!) -->
+            <button onclick="openQuickCaptureHub()"
+              class="w-12 h-12 rounded-full bg-[#6246EA] text-white flex items-center justify-center shadow-md hover:scale-105 transition-transform"
+              title="Create Note, HTML Doc, or Add Image/File">
+              <i data-lucide="plus" class="w-6 h-6"></i>
+            </button>
+
+            <!-- Nav 3: Time & Schedule -->
+            <button id="nav-time" onclick="switchTab('time')"
+              class="w-11 h-11 rounded-full text-white/70 hover:text-white flex items-center justify-center transition-all"
+              title="Time & Alarms">
+              <i data-lucide="calendar-clock" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Nav 4: Biometric Vault -->
+            <button id="nav-vault" onclick="switchTab('vault')"
+              class="w-11 h-11 rounded-full text-white/70 hover:text-white flex items-center justify-center transition-all"
+              title="Private Vault">
+              <i data-lucide="shield" class="w-5 h-5"></i>
+            </button>
+
+          </div>
+
+          <!-- ========================================================= -->
+          <!-- MODAL 1: MULTI-FORMAT QUICK CAPTURE SHEET (+ BUTTON)      -->
+          <!-- ========================================================= -->
+          <div id="quick-capture-modal"
+            class="hidden absolute inset-0 bg-black/55 backdrop-blur-xs z-40 flex items-end p-3">
+            <div class="w-full rounded-[32px] bg-[var(--bg-surface)] p-5 shadow-2xl space-y-3.5">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] font-extrabold uppercase tracking-wider text-[#6246EA]">Create or
+                    Import</span>
+                  <h3 class="text-base font-extrabold">Add to Your Workspace</h3>
+                </div>
+                <button onclick="closeQuickCaptureHub()"
+                  class="w-8 h-8 rounded-full bg-[var(--bg-subtle)] flex items-center justify-center font-bold text-xs">
+                  ✕
+                </button>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2.5">
+                <!-- Option 1: Markdown Note -->
+                <button
+                  onclick="closeQuickCaptureHub(); openNotePreview('New Markdown Note.md', 'Fast plain-text Markdown note with [[WikiLinks]], checklists, and math support.', '#B4D2FF');"
+                  class="p-3.5 rounded-[22px] bg-[#EAE6FD] text-[#141416] text-left hover:scale-[1.02] transition-all">
+                  <div class="w-9 h-9 rounded-[12px] bg-[#6246EA] text-white flex items-center justify-center mb-2">
+                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                  </div>
+                  <div class="text-xs font-extrabold">Markdown Note</div>
+                  <div class="text-[10px] text-[#141416]/70">Plain <span class="mono">.md</span> file</div>
+                </button>
+
+                <!-- Option 2: HTML Magazine Document -->
+                <button onclick="closeQuickCaptureHub(); openHtmlCreatorModal();"
+                  class="p-3.5 rounded-[22px] bg-[#FFF4DC] text-[#141416] text-left hover:scale-[1.02] transition-all">
+                  <div class="w-9 h-9 rounded-[12px] bg-[#FDBE58] text-[#141416] flex items-center justify-center mb-2">
+                    <i data-lucide="code-2" class="w-4 h-4"></i>
+                  </div>
+                  <div class="text-xs font-extrabold">HTML Document</div>
+                  <div class="text-[10px] text-[#141416]/70">Custom CSS <span class="mono">.html</span> page</div>
+                </button>
+
+                <!-- Option 3: Upload Image / File to Folder -->
+                <button onclick="closeQuickCaptureHub(); triggerRealFileUpload();"
+                  class="p-3.5 rounded-[22px] bg-[#FFE6E2] text-[#141416] text-left hover:scale-[1.02] transition-all">
+                  <div class="w-9 h-9 rounded-[12px] bg-[#FF6B57] text-white flex items-center justify-center mb-2">
+                    <i data-lucide="image-plus" class="w-4 h-4"></i>
+                  </div>
+                  <div class="text-xs font-extrabold">Add Image / File</div>
+                  <div class="text-[10px] text-[#141416]/70">Save to any folder</div>
+                </button>
+
+                <!-- Option 4: Create New Folder -->
+                <button onclick="closeQuickCaptureHub(); switchTab('files'); createNewFolderPrompt();"
+                  class="p-3.5 rounded-[22px] bg-[#E3F9E9] text-[#141416] text-left hover:scale-[1.02] transition-all">
+                  <div class="w-9 h-9 rounded-[12px] bg-[#3CC162] text-white flex items-center justify-center mb-2">
+                    <i data-lucide="folder-plus" class="w-4 h-4"></i>
+                  </div>
+                  <div class="text-xs font-extrabold">New Media Folder</div>
+                  <div class="text-[10px] text-[#141416]/70">For photos, PDFs & docs</div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========================================================= -->
+          <!-- MODAL 2: SANDBOXED HTML DOCUMENT VIEWER & CODE INSPECTOR  -->
+          <!-- ========================================================= -->
+          <div id="html-doc-modal"
+            class="hidden absolute inset-0 bg-black/60 backdrop-blur-xs z-40 flex flex-col justify-end p-2.5">
+            <div
+              class="w-full h-[86%] rounded-[34px] bg-[var(--bg-surface)] p-4 shadow-2xl flex flex-col justify-between overflow-hidden">
+              <!-- Top Bar -->
+              <div class="flex items-center justify-between pb-3 border-b border-black/5 shrink-0">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span
+                    class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#FDBE58] text-[#141416] shrink-0">
+                    🌐 Sandboxed HTML
+                  </span>
+                  <h3 id="html-modal-title" class="text-xs font-extrabold truncate">Quantum Wave Sheet.html</h3>
+                </div>
+                <button onclick="closeHtmlDocModal()"
+                  class="w-8 h-8 rounded-full bg-[var(--bg-subtle)] flex items-center justify-center font-bold text-xs shrink-0">
+                  ✕
+                </button>
+              </div>
+
+              <!-- View Switcher: Rendered Magazine View vs HTML/CSS Source -->
+              <div class="my-2.5 bg-[var(--bg-subtle)] p-1 rounded-full grid grid-cols-2 gap-1 shrink-0">
+                <button id="btn-html-render" onclick="toggleHtmlDocMode('render')"
+                  class="py-1.5 rounded-full text-[11px] font-extrabold bg-[#6246EA] text-white">
+                  🎨 Rendered Magazine View
+                </button>
+                <button id="btn-html-source" onclick="toggleHtmlDocMode('source')"
+                  class="py-1.5 rounded-full text-[11px] font-extrabold text-[var(--ink-secondary)]">
+                  💻 Edit HTML / CSS Source
+                </button>
+              </div>
+
+              <!-- Rendered Sandboxed HTML Preview -->
+              <div id="html-rendered-container"
+                class="flex-1 overflow-y-auto phone-scroll rounded-[24px] bg-[#141416] text-white p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] uppercase tracking-widest text-[#FDBE58] font-extrabold">PHYS-301 · VISUAL
+                    ZINE</span>
+                  <span class="px-2 py-0.5 rounded bg-white/10 text-[9px] mono">JS: OFF · OFFLINE</span>
+                </div>
+                <h2 class="text-xl font-extrabold leading-tight text-[#B4D2FF]">
+                  Schrödinger Wave Equation & Probability Density
+                </h2>
+                <p class="text-xs text-white/80 leading-relaxed">
+                  Unlike plain Markdown, this <span class="mono text-[#FDBE58]">.html</span> document uses custom CSS
+                  Grid cards and magazine typography right inside your workspace.
+                </p>
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                  <div class="rounded-[16px] bg-white/10 p-3 border border-white/10">
+                    <div class="text-[10px] text-[#FDBE58] font-bold">Time-Dependent</div>
+                    <div class="text-xs font-extrabold mt-1 mono">iℏ ∂Ψ/∂t = ĤΨ</div>
+                  </div>
+                  <div class="rounded-[16px] bg-white/10 p-3 border border-white/10">
+                    <div class="text-[10px] text-[#3CC162] font-bold">Born Rule</div>
+                    <div class="text-xs font-extrabold mt-1 mono">P(x) = |Ψ(x,t)|²</div>
+                  </div>
+                </div>
+                <div
+                  class="rounded-[16px] bg-[#6246EA]/30 border border-[#6246EA] p-3 flex items-center justify-between">
+                  <div>
+                    <div class="text-[11px] font-extrabold">Linked Folder Image</div>
+                    <div class="text-[10px] text-white/75">/Lectures/Images/Quantum_Well.png</div>
+                  </div>
+                  <button
+                    onclick="closeHtmlDocModal(); openImageLightbox('Quantum_Potential_Well.png', 'Linked inside Quantum Wave Sheet.html')"
+                    class="px-2.5 py-1 rounded-full bg-white text-[#141416] text-[10px] font-extrabold">
+                    View Image
+                  </button>
+                </div>
+              </div>
+
+              <!-- Editable HTML/CSS Source Code View -->
+              <textarea id="html-source-container"
+                class="hidden flex-1 w-full rounded-[24px] bg-[#0F1015] text-[#3CC162] p-4 mono text-[11px] leading-relaxed focus:outline-none resize-none">
+<!-- Sandboxed All-Rounder HTML Document -->
+<style>
+  .zine-card {
+    background: #141416;
+    color: #FAF8F5;
+    border-radius: 24px;
+    padding: 20px;
+  }
+  .formula-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+</style>
+
+<article class="zine-card">
+  <h1>Schrödinger Wave Equation</h1>
+  <div class="formula-grid">
+    <div>iℏ ∂Ψ/∂t = ĤΨ</div>
+    <div>P(x) = |Ψ(x,t)|²</div>
+  </div>
+</article></textarea>
+
+              <!-- Bottom Actions -->
+              <div class="pt-3 flex gap-2 shrink-0">
+                <button onclick="saveCustomHtmlDoc()"
+                  class="flex-1 py-3 rounded-full bg-[#6246EA] text-white text-xs font-extrabold">
+                  Save .HTML Document
+                </button>
+                <button onclick="switchTab('time'); closeHtmlDocModal();"
+                  class="px-4 py-3 rounded-full bg-[var(--bg-subtle)] text-xs font-extrabold">
+                  🔗 Linked 08:30 Alarm
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========================================================= -->
+          <!-- MODAL 3: STANDALONE IMAGE LIGHTBOX / FILE PREVIEW         -->
+          <!-- ========================================================= -->
+          <div id="note-modal" class="hidden absolute inset-0 bg-black/50 backdrop-blur-xs z-40 flex items-end p-3">
+            <div
+              class="w-full rounded-[32px] bg-[var(--bg-surface)] p-5 shadow-2xl space-y-3 animate-in slide-in-from-bottom">
+              <div class="flex items-center justify-between">
+                <span id="modal-badge"
+                  class="px-3 py-1 rounded-full text-[11px] font-extrabold bg-[#FDBE58] text-[#141416]">
+                  Workspace Item
+                </span>
+                <button onclick="closeNoteModal()"
+                  class="w-8 h-8 rounded-full bg-[var(--bg-subtle)] flex items-center justify-center font-bold text-xs">
+                  ✕
+                </button>
+              </div>
+              <h3 id="modal-title" class="text-lg font-extrabold">Physics: Wave Mechanics</h3>
+              <!-- Simulated Image Preview Box (Shown when inspecting an image file) -->
+              <div id="modal-image-preview"
+                class="hidden h-36 rounded-[20px] bg-gradient-to-tr from-[#6246EA] via-[#FF6B57] to-[#FDBE58] p-4 flex flex-col justify-between text-white shadow-inner">
+                <span class="px-2.5 py-0.5 rounded-full bg-black/30 backdrop-blur-xs text-[10px] font-extrabold w-fit">
+                  🖼️ Standalone Image File (No .MD required)
+                </span>
+                <div class="text-xs font-bold bg-black/30 p-2 rounded-[12px] backdrop-blur-xs">
+                  Stored directly in folder · Pinch to zoom · Linkable to any alarm or class
+                </div>
+              </div>
+              <p id="modal-body" class="text-xs text-[var(--ink-secondary)] leading-relaxed">
+                Notes content preview...
+              </p>
+              <div class="pt-2 flex gap-2">
+                <button onclick="closeNoteModal()"
+                  class="flex-1 py-3 rounded-full bg-[#6246EA] text-white text-xs font-extrabold">
+                  Open Full View
+                </button>
+                <button onclick="switchTab('files'); closeNoteModal();"
+                  class="px-4 py-3 rounded-full bg-[var(--bg-subtle)] text-xs font-extrabold">
+                  📁 Show in Folder
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: DESIGN SYSTEM & ANTI-SLOP INSPECTOR -->
+  <div class="flex-1 max-w-2xl space-y-6">
+
+    <!-- Header Card -->
+    <div class="bg-white rounded-[32px] p-6 lg:p-8 shadow-sm border border-black/5">
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-[#EAE6FD] text-[#6246EA]">
+          Tactile Bento Design System
+        </span>
+        <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-[#FFE6E2] text-[#FF6B57]">
+          📁 Standalone Image/File Folders Added
+        </span>
+        <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-[#FFF4DC] text-[#B86B00]">
+          🌐 HTML Document System Added
+        </span>
+      </div>
+      <h1 class="text-2xl lg:text-3xl font-extrabold tracking-tight">
+        Multi-Format Workspace: Folders for Images/Files + HTML Document System
+      </h1>
+      <p class="text-sm text-[#6E717A] mt-2 leading-relaxed">
+        You can now store and organize <strong>standalone images, PDFs, and files inside custom Bento folders</strong>
+        (without needing to embed them inside a <span class="mono">.md</span> file), plus create and render
+        <strong>sandboxed <span class="mono">.html</span> magazine documents</strong> with custom CSS!
+      </p>
+
+      <!-- Quick Jump Buttons to Test the New Features in the Phone Simulator -->
+      <div class="flex flex-wrap gap-2 mt-5">
+        <button onclick="setAppMode('app'); switchTab('files');"
+          class="px-4 py-2.5 rounded-full text-xs font-extrabold bg-[#FF6B57] text-white shadow-sm hover:opacity-90 transition-all">
+          📁 1. Open Image & File Folders
+        </button>
+        <button onclick="setAppMode('app'); openHtmlDocViewer('Quantum Wave Interactive Sheet.html');"
+          class="px-4 py-2.5 rounded-full text-xs font-extrabold bg-[#6246EA] text-white shadow-sm hover:opacity-90 transition-all">
+          🌐 2. Test Live HTML Document Viewer
+        </button>
+        <button onclick="setAppMode('app'); triggerRealFileUpload();"
+          class="px-4 py-2.5 rounded-full text-xs font-extrabold bg-[#141416] text-white shadow-sm hover:opacity-90 transition-all">
+          🖼️ 3. Upload a Real Image/File to Phone
+        </button>
+        <button onclick="setAppMode('app'); switchTab('time');"
+          class="px-3.5 py-2.5 rounded-full text-xs font-bold bg-[#F1EFEA] hover:bg-[#3CC162] hover:text-white transition-all">
+          ⏰ 4. Inspect Zero-Overflow Alarms
+        </button>
+      </div>
+    </div>
+
+    <!-- Feature Architecture Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Feature A: Standalone Folders for Images & Files -->
+      <div class="bg-white rounded-[26px] p-5 shadow-sm border border-black/5">
+        <div class="flex items-center gap-2 text-xs font-extrabold text-[#FF6B57] uppercase tracking-wider">
+          <span>📁 Standalone Image & File Folders</span>
+        </div>
+        <p class="text-xs text-[#6E717A] mt-1.5">
+          Users don't always want to create a Markdown note just to save whiteboard photos, lecture slides, or PDFs.
+        </p>
+        <div class="mt-3 pt-3 border-t border-black/5 text-xs font-bold text-[#141416]">
+          ✅ <span class="text-[#6246EA]">How it works:</span> Dedicated Bento folders (<span class="mono">/Lecture
+            Photos</span>, <span class="mono">/Handouts</span>) hold raw <span class="mono">.png</span>, <span
+            class="mono">.jpg</span>, <span class="mono">.pdf</span>, and <span class="mono">.zip</span> files. Any
+          image or folder can be linked directly to an alarm or class slot!
+        </div>
+      </div>
+
+      <!-- Feature B: HTML Document System -->
+      <div class="bg-white rounded-[26px] p-5 shadow-sm border border-black/5">
+        <div class="flex items-center gap-2 text-xs font-extrabold text-[#6246EA] uppercase tracking-wider">
+          <span>🌐 Sandboxed HTML Document System</span>
+        </div>
+        <p class="text-xs text-[#6E717A] mt-1.5">
+          Alongside <span class="mono">.md</span> notes, users can create or import <span class="mono">.html</span>
+          documents for magazine-style layouts, custom CSS grids, and interactive visual sheets.
+        </p>
+        <div class="mt-3 pt-3 border-t border-black/5 text-xs font-bold text-[#141416]">
+          ✅ <span class="text-[#3CC162]">How it works:</span> Renders locally inside a sandboxed container
+          (offline-first, zero tracking) with a 1-tap toggle between <strong>Rendered Magazine View</strong> and
+          <strong>HTML/CSS Source Editor</strong>.
+        </div>
+      </div>
+
+      <!-- Fix 2: 69px Overflow Fix -->
+      <div class="bg-white rounded-[26px] p-5 shadow-sm border border-black/5">
+        <div class="flex items-center gap-2 text-xs font-extrabold text-[#D98200] uppercase tracking-wider">
+          <span>🛠️ 69px Overflow Bug Eliminated</span>
+        </div>
+        <p class="text-xs text-[#6E717A] mt-1.5">
+          Alarm cards now link to <span class="mono">.md</span> notes, <span class="mono">.html</span> docs, or image
+          folders inside an <span class="mono">Expanded</span> column with <span
+            class="mono">TextOverflow.ellipsis</span>.
+        </p>
+      </div>
+
+      <!-- Fix 3: Humanized Settings -->
+      <div class="bg-white rounded-[26px] p-5 shadow-sm border border-black/5">
+        <div class="flex items-center gap-2 text-xs font-extrabold text-[#3CC162] uppercase tracking-wider">
+          <span>🔒 Clean Local File Ownership</span>
+        </div>
+        <p class="text-xs text-[#6E717A] mt-1.5">
+          All developer jargon (<span class="mono">PLAN SECTION 6</span>) is replaced with clear storage counts for
+          Markdown notes, HTML docs, and media folders.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    let currentUserName = "Anna Lane";
+    let isDark = false;
+    let customFolderCount = 4;
+
+    function setAppMode(mode) {
+      const wtContainer = document.getElementById('walkthrough-container');
+      const appContainer = document.getElementById('main-app-container');
+      const btnWt = document.getElementById('btn-mode-walkthrough');
+      const btnApp = document.getElementById('btn-mode-app');
+
+      if (mode === 'walkthrough') {
+        wtContainer.classList.remove('hidden');
+        appContainer.classList.add('hidden');
+        btnWt.className = "px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-[#6246EA] text-white shadow-sm";
+        btnApp.className = "px-4 py-1.5 rounded-full text-xs font-bold transition-all text-[#6E717A] hover:text-[#141416]";
+      } else {
+        wtContainer.classList.add('hidden');
+        appContainer.classList.remove('hidden');
+        btnApp.className = "px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-[#6246EA] text-white shadow-sm";
+        btnWt.className = "px-4 py-1.5 rounded-full text-xs font-bold transition-all text-[#6E717A] hover:text-[#141416]";
+      }
+    }
+
+    function goToWalkthroughStep(step) {
+      [1, 2, 3].forEach(s => {
+        document.getElementById('wt-step-' + s).classList.toggle('hidden', s !== step);
+        const dot = document.getElementById('wt-dot-' + s);
+        if (s === step) {
+          dot.className = "h-2 w-8 rounded-full bg-[#6246EA] transition-all";
+        } else if (s < step) {
+          dot.className = "h-2 w-2 rounded-full bg-[#6246EA]/50 transition-all";
+        } else {
+          dot.className = "h-2 w-2 rounded-full bg-[#D8D5CE] transition-all";
+        }
+      });
+    }
+
+    function updateUserName(val) {
+      currentUserName = val.trim() || "Friend";
+      document.getElementById('header-title').textContent = currentUserName + "!";
+      const parts = currentUserName.split(' ');
+      const initials = parts.length > 1 ? (parts[0][0] + parts[1][0]) : currentUserName.slice(0, 2);
+      document.getElementById('avatar-initials').textContent = initials.toUpperCase();
+    }
+
+    function toggleStarterSpace(card) {
+      const selected = card.getAttribute('data-selected') === 'true';
+      card.setAttribute('data-selected', !selected);
+      const check = card.querySelector('.space-check');
+      if (selected) {
+        card.style.opacity = '0.45';
+        check.textContent = '+';
+      } else {
+        card.style.opacity = '1';
+        check.textContent = '✓';
+      }
+    }
+
+    function triggerWalkthroughLink() {
+      const badge = document.getElementById('demo-linked-badge');
+      const msg = document.getElementById('demo-success-msg');
+      const btn = document.getElementById('btn-demo-link');
+      const card = document.getElementById('demo-alarm-card');
+
+      badge.classList.remove('hidden');
+      msg.classList.remove('hidden');
+      card.classList.add('border-[#6246EA]');
+      btn.classList.remove('pulse-cta');
+      btn.className = "px-5 py-2.5 rounded-full bg-[#3CC162] text-white text-xs font-extrabold flex items-center gap-2 shadow-sm";
+      document.getElementById('demo-link-label').textContent = "Linked HTML Doc & Images ✓";
+    }
+
+    function switchTab(tabName) {
+      const tabs = ['notes', 'files', 'time', 'health', 'vault', 'settings'];
+      tabs.forEach(t => {
+        const el = document.getElementById('tab-' + t);
+        if (el) el.classList.toggle('hidden', t !== tabName);
+      });
+
+      // Update floating dock active circle
+      ['notes', 'files', 'time', 'vault'].forEach(nav => {
+        const btn = document.getElementById('nav-' + nav);
+        if (!btn) return;
+        if (nav === tabName) {
+          btn.className = "w-11 h-11 rounded-full bg-white text-[#141416] flex items-center justify-center transition-all shadow-sm";
+        } else {
+          btn.className = "w-11 h-11 rounded-full text-white/70 hover:text-white flex items-center justify-center transition-all";
+        }
+      });
+
+      // Update header contextual title
+      const titleEl = document.getElementById('header-title');
+      const subEl = document.getElementById('header-sub');
+      if (tabName === 'notes') {
+        subEl.textContent = "Good morning · Fri, 23 Oct";
+        titleEl.textContent = currentUserName + "!";
+      } else if (tabName === 'files') {
+        subEl.textContent = "Images, PDFs, HTML & MD";
+        titleEl.textContent = "Folders & Media";
+      } else if (tabName === 'time') {
+        subEl.textContent = "Schedule & Linked Alarms";
+        titleEl.textContent = "Your Plan";
+      } else if (tabName === 'health') {
+        subEl.textContent = "On-Device Health Connect";
+        titleEl.textContent = "Daily Quota";
+      } else if (tabName === 'vault') {
+        subEl.textContent = "Hardware Keystore Encrypted";
+        titleEl.textContent = "Private Vault";
+      } else if (tabName === 'settings') {
+        subEl.textContent = "Local-First Architecture";
+        titleEl.textContent = "Data & Privacy";
+      }
+    }
+
+    function openFolderExplorer(folderTitle, filterType) {
+      switchTab('files');
+      document.getElementById('header-title').textContent = folderTitle;
+      filterFolderItems(filterType);
+    }
+
+    function filterFolderItems(type) {
+      const imgSec = document.getElementById('folder-images-section');
+      const htmlSec = document.getElementById('folder-html-section');
+      if (type === 'images') {
+        imgSec.classList.remove('hidden');
+        htmlSec.classList.add('hidden');
+      } else if (type === 'html') {
+        imgSec.classList.add('hidden');
+        htmlSec.classList.remove('hidden');
+      } else {
+        imgSec.classList.remove('hidden');
+        htmlSec.classList.remove('hidden');
+      }
+    }
+
+    function createNewFolderPrompt() {
+      const colors = ['#FF6B57', '#6246EA', '#3CC162', '#FDBE58', '#B4D2FF'];
+      const names = ['📐 Architecture Scans', '🧪 Lab Diagrams', '🎨 UI Inspiration', '📚 Exam PDFs'];
+      const chosenName = names[customFolderCount % names.length];
+      const chosenColor = colors[customFolderCount % colors.length];
+      const textColor = (chosenColor === '#FDBE58' || chosenColor === '#B4D2FF') ? '#141416' : '#FFFFFF';
+
+      const grid = document.getElementById('folders-grid');
+      const card = document.createElement('div');
+      card.className = `bento-card rounded-[24px] p-4 cursor-pointer shadow-sm`;
+      card.style.backgroundColor = chosenColor;
+      card.style.color = textColor;
+      card.onclick = () => triggerRealFileUpload();
+      card.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-base">📁</span>
+          <span class="text-[10px] font-extrabold bg-black/15 px-2 py-0.5 rounded-full">0 files</span>
+        </div>
+        <div class="font-extrabold text-sm mt-3 truncate">${chosenName}</div>
+        <div class="text-[10px] opacity-80 font-medium">Tap to add images/files</div>
+      `;
+      grid.prepend(card);
+      customFolderCount++;
+      document.getElementById('folder-count-badge').textContent = customFolderCount + " Folders";
+    }
+
+    function triggerRealFileUpload() {
+      document.getElementById('real-file-input').click();
+    }
+
+    function handleRealFileUpload(event) {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) return;
+
+      switchTab('files');
+      const gallery = document.getElementById('image-gallery-grid');
+      const htmlList = document.getElementById('html-docs-list');
+      const recentList = document.getElementById('recent-files-list');
+
+      files.forEach(file => {
+        const ext = file.name.split('.').pop().toLowerCase();
+        const sizeKB = Math.max(1, Math.round(file.size / 1024)) + ' KB';
+
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const tile = document.createElement('div');
+            tile.className = "bento-card rounded-[18px] bg-[#1E222D] h-24 p-2 flex flex-col justify-between text-white cursor-pointer relative overflow-hidden shadow-sm";
+            tile.style.backgroundImage = `url('${e.target.result}')`;
+            tile.style.backgroundSize = 'cover';
+            tile.style.backgroundPosition = 'center';
+            tile.onclick = () => openImageLightbox(file.name, `Uploaded to Folder · ${sizeKB}`);
+            tile.innerHTML = `
+              <div class="absolute inset-0 bg-black/35"></div>
+              <span class="relative z-10 text-[9px] font-extrabold bg-[#3CC162] px-1.5 py-0.5 rounded w-fit uppercase">${ext}</span>
+              <div class="relative z-10">
+                <div class="text-[10px] font-extrabold leading-tight truncate">${file.name}</div>
+                <div class="text-[8px] text-white/90">${sizeKB}</div>
+              </div>
+            `;
+            gallery.prepend(tile);
+          };
+          reader.readAsDataURL(file);
+        } else if (ext === 'html' || ext === 'htm') {
+          const row = document.createElement('div');
+          row.className = "bento-card rounded-[22px] bg-[var(--bg-surface)] p-3.5 flex items-center justify-between shadow-sm cursor-pointer border-l-4 border-[#3CC162]";
+          row.onclick = () => openHtmlDocViewer(file.name);
+          row.innerHTML = `
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 rounded-[14px] bg-[#E3F9E9] text-[#289E48] flex items-center justify-center shrink-0">
+                🌐
+              </div>
+              <div class="min-w-0">
+                <div class="text-xs font-extrabold truncate">${file.name}</div>
+                <div class="text-[10px] text-[var(--ink-secondary)]">Imported HTML Document · ${sizeKB}</div>
+              </div>
+            </div>
+            <span class="px-2.5 py-1 rounded-full bg-[#3CC162] text-white text-[10px] font-extrabold shrink-0">Render</span>
+          `;
+          htmlList.prepend(row);
+        } else {
+          // Generic PDF / File added to folder
+          const item = document.createElement('div');
+          item.className = "note-item bento-card rounded-[22px] bg-[var(--bg-surface)] p-3.5 flex items-center gap-3.5 shadow-sm cursor-pointer";
+          item.onclick = () => openNotePreview(file.name, `Standalone file stored in folder (${sizeKB}). Ready to link to any alarm or class.`, '#B4D2FF');
+          item.innerHTML = `
+            <div class="w-12 h-12 rounded-[16px] bg-[#EAE6FD] text-[#6246EA] flex flex-col items-center justify-center font-extrabold leading-none shrink-0">
+              <span class="text-[10px] uppercase">${ext}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h4 class="font-extrabold text-sm truncate">${file.name}</h4>
+              <p class="text-xs text-[var(--ink-secondary)] truncate mt-0.5">Added to Folder · ${sizeKB}</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full bg-[#E3F9E9] text-[#1A7F37] text-[10px] font-extrabold shrink-0">New</span>
+          `;
+          recentList.prepend(item);
+        }
+      });
+    }
+
+    function openQuickCaptureHub() {
+      document.getElementById('quick-capture-modal').classList.remove('hidden');
+    }
+
+    function closeQuickCaptureHub() {
+      document.getElementById('quick-capture-modal').classList.add('hidden');
+    }
+
+    function openHtmlDocViewer(title) {
+      document.getElementById('html-modal-title').textContent = title;
+      document.getElementById('html-doc-modal').classList.remove('hidden');
+      toggleHtmlDocMode('render');
+    }
+
+    function openHtmlCreatorModal() {
+      document.getElementById('html-modal-title').textContent = "New_Magazine_Page.html";
+      document.getElementById('html-doc-modal').classList.remove('hidden');
+      toggleHtmlDocMode('source');
+    }
+
+    function closeHtmlDocModal() {
+      document.getElementById('html-doc-modal').classList.add('hidden');
+    }
+
+    function toggleHtmlDocMode(mode) {
+      const renderBox = document.getElementById('html-rendered-container');
+      const sourceBox = document.getElementById('html-source-container');
+      const btnRender = document.getElementById('btn-html-render');
+      const btnSource = document.getElementById('btn-html-source');
+
+      if (mode === 'render') {
+        renderBox.classList.remove('hidden');
+        sourceBox.classList.add('hidden');
+        btnRender.className = "py-1.5 rounded-full text-[11px] font-extrabold bg-[#6246EA] text-white";
+        btnSource.className = "py-1.5 rounded-full text-[11px] font-extrabold text-[var(--ink-secondary)]";
+      } else {
+        renderBox.classList.add('hidden');
+        sourceBox.classList.remove('hidden');
+        btnSource.className = "py-1.5 rounded-full text-[11px] font-extrabold bg-[#6246EA] text-white";
+        btnRender.className = "py-1.5 rounded-full text-[11px] font-extrabold text-[var(--ink-secondary)]";
+      }
+    }
+
+    function saveCustomHtmlDoc() {
+      closeHtmlDocModal();
+      switchTab('files');
+    }
+
+    function openImageLightbox(filename, subtitle) {
+      const modal = document.getElementById('note-modal');
+      document.getElementById('modal-title').textContent = filename;
+      document.getElementById('modal-body').textContent = subtitle;
+      document.getElementById('modal-image-preview').classList.remove('hidden');
+      const badge = document.getElementById('modal-badge');
+      badge.textContent = "🖼️ Standalone Folder Image";
+      badge.style.backgroundColor = "#FF6B57";
+      badge.style.color = "#FFFFFF";
+      modal.classList.remove('hidden');
+    }
+
+    function switchTimeView(view) {
+      const alarmsView = document.getElementById('time-alarms-view');
+      const timetableView = document.getElementById('time-timetable-view');
+      const btnAlarms = document.getElementById('subtab-alarms');
+      const btnTimetable = document.getElementById('subtab-timetable');
+
+      if (view === 'alarms') {
+        alarmsView.classList.remove('hidden');
+        timetableView.classList.add('hidden');
+        btnAlarms.className = "py-2 rounded-full text-xs font-extrabold bg-[#6246EA] text-white shadow-sm transition-all";
+        btnTimetable.className = "py-2 rounded-full text-xs font-extrabold text-[var(--ink-secondary)] transition-all";
+      } else {
+        alarmsView.classList.add('hidden');
+        timetableView.classList.remove('hidden');
+        btnTimetable.className = "py-2 rounded-full text-xs font-extrabold bg-[#6246EA] text-white shadow-sm transition-all";
+        btnAlarms.className = "py-2 rounded-full text-xs font-extrabold text-[var(--ink-secondary)] transition-all";
+      }
+    }
+
+    function selectDay(btn) {
+      document.querySelectorAll('.day-pill').forEach(el => {
+        el.className = "day-pill h-[72px] rounded-full bg-[var(--bg-surface)] border border-black/5 flex flex-col items-center justify-center gap-1 transition-all";
+      });
+      btn.className = "day-pill h-[72px] rounded-full bg-[#141416] text-white shadow-md flex flex-col items-center justify-center gap-1 transition-all";
+    }
+
+    function toggleSwitch(btn) {
+      const isOn = btn.getAttribute('data-on') === 'true';
+      btn.setAttribute('data-on', !isOn);
+      if (isOn) {
+        btn.className = "w-12 h-7 rounded-full bg-[#D8D5CE] p-1 flex items-center justify-start transition-all shrink-0";
+      } else {
+        btn.className = "w-12 h-7 rounded-full bg-[#6246EA] p-1 flex items-center justify-end transition-all shrink-0";
+      }
+    }
+
+    function filterNotes(category, pillBtn) {
+      document.querySelectorAll('.note-pill').forEach(b => {
+        b.className = "note-pill px-4 py-2 rounded-full text-xs font-bold bg-[var(--bg-subtle)] text-[var(--ink-secondary)] shrink-0 transition-all";
+      });
+      pillBtn.className = "note-pill px-4 py-2 rounded-full text-xs font-bold bg-[#6246EA] text-white shadow-sm shrink-0 transition-all";
+
+      document.querySelectorAll('.note-item').forEach(item => {
+        if (category === 'all' || item.getAttribute('data-category') === category) {
+          item.classList.remove('hidden');
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+    }
+
+    function openNotePreview(title, body, badgeColor) {
+      const modal = document.getElementById('note-modal');
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-body').textContent = body;
+      document.getElementById('modal-image-preview').classList.add('hidden');
+      const badge = document.getElementById('modal-badge');
+      badge.textContent = "Linked Workspace Document";
+      badge.style.backgroundColor = badgeColor || '#FDBE58';
+      badge.style.color = (badgeColor === '#6246EA' || badgeColor === '#3CC162' || badgeColor === '#FF6B57') ? '#FFFFFF' : '#141416';
+      modal.classList.remove('hidden');
+    }
+
+    function closeNoteModal() {
+      document.getElementById('note-modal').classList.add('hidden');
+    }
+
+    function toggleSearchModal() {
+      openNotePreview(
+        'Instant Local Search (< 50ms)',
+        'Searching across .md notes, .html documents, standalone image folders, and scheduled alarm links...',
+        '#B4D2FF'
+      );
+    }
+
+    function unlockVaultDemo(btn) {
+      btn.textContent = "Authenticated via BiometricPrompt ✓";
+      btn.className = "w-full py-3.5 rounded-full bg-[#3CC162] text-white text-xs font-extrabold shadow-md transition-all";
+      document.getElementById('vault-unlocked-items').classList.remove('hidden');
+    }
+
+    function toggleDarkMode() {
+      isDark = !isDark;
+      const canvas = document.getElementById('screen-canvas');
+      canvas.classList.toggle('phone-dark', isDark);
+    }
+  </script>
+</body>
+
+</html>
