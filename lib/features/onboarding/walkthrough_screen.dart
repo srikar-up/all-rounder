@@ -1035,31 +1035,48 @@ class _WalkthroughScreenState extends State<WalkthroughScreen> {
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: () => setState(() => _biometricEnabled = !_biometricEnabled),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 48,
-                  height: 28,
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: _biometricEnabled ? AppColors.iris : (isDark ? const Color(0xFF2C2F3D) : const Color(0xFFD8D5CE)),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  alignment: _biometricEnabled ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    width: 22,
-                    height: 22,
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => setState(() => _biometricEnabled = !_biometricEnabled),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 50,
+                    height: 28,
+                    padding: const EdgeInsets.all(2.5),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(35),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
+                      color: _biometricEnabled ? AppColors.iris : (isDark ? const Color(0xFF2C2F3D) : const Color(0xFFD4D0C7)),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: _biometricEnabled ? AppColors.iris : (isDark ? Colors.white24 : const Color(0xFFBEB9AE)),
+                        width: 1.2,
+                      ),
+                    ),
+                    alignment: _biometricEnabled ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      width: 23,
+                      height: 23,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(55),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1.5),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withAlpha(20),
+                            blurRadius: 1,
+                            offset: const Offset(0, 0.5),
+                          ),
+                        ],
+                      ),
+                      child: _biometricEnabled
+                          ? const Center(
+                              child: Icon(Icons.check, size: 13, color: AppColors.iris),
+                            )
+                          : null,
                     ),
                   ),
                 ),

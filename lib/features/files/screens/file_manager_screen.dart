@@ -530,29 +530,36 @@ class _FileManagerScreenState extends State<FileManagerScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'HTML Document System (.html)',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.3,
-                        color: isDark ? AppColors.inkPrimaryDark : AppColors.inkPrimaryLight,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'HTML Document System (.html)',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.3,
+                          color: isDark ? AppColors.inkPrimaryDark : AppColors.inkPrimaryLight,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      'Sandboxed WebView · Custom CSS · Offline Magazine Pages',
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? AppColors.inkSecondaryDark : AppColors.inkSecondaryLight,
+                      const SizedBox(height: 1),
+                      Text(
+                        'Sandboxed WebView · Custom CSS · Offline Magazine Pages',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? AppColors.inkSecondaryDark : AppColors.inkSecondaryLight,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 GestureDetector(
                   onTap: _showAddFileDialog,
                   child: Container(
